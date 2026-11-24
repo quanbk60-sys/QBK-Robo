@@ -1,0 +1,287 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+body{margin:0;background:#e4e9ec;font-family:"Be Vietnam Pro",system-ui,sans-serif;color:#17202a;width:2400px}
+header{display:flex;justify-content:space-between;align-items:flex-end;padding:26px 36px 10px}
+h1{margin:0;font:700 40px "Barlow Semi Condensed","Arial Narrow",sans-serif}
+header p{margin:4px 0 0;color:#4d5964;font-size:17px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;max-width:1100px;justify-content:flex-end;font-size:16px}
+.legend i,.lb i{display:inline-block;width:22px;height:8px;border-radius:4px;margin-right:7px;vertical-align:2px;border:1px solid rgba(0,0,0,.25)}
+.panels{display:grid;grid-template-columns:1180px 1180px;gap:4px;padding:0 18px 18px}
+.panel{position:relative;width:1180px;height:1180px;background:#fff;border-radius:10px;overflow:hidden}
+.panel h2{position:absolute;top:16px;left:0;right:0;text-align:center;margin:0;font:700 24px "Barlow Semi Condensed",sans-serif;color:#99681a;z-index:3}
+.r img{position:absolute;inset:0;width:1180px;height:1180px}
+svg{position:absolute;inset:0;z-index:1}
+.labels{position:absolute;inset:0;z-index:2}
+.lb{position:absolute;width:270px;background:rgba(255,255,255,.94);border:1.5px solid #1d2a38;border-radius:7px;padding:7px 10px;font-size:14.5px;line-height:1.4;display:flex;flex-direction:column}
+.lb b{font-size:15.5px;margin-bottom:2px}
+.lb.L{left:18px} .lb.R{right:18px}
+footer{padding:0 36px 24px;font-size:16px;color:#4d5964}
+</style></head><body>
+<header><div><h1>QBK-Robo · Sơ đồ nối dây 3D</h1><p>Chân GPIO là bản tạm, chờ sơ đồ board của shop. Khung đồng và bánh xích vẽ mờ để thấy dây.</p></div><div class="legend"><span><i style="background:#d83a2e"></i>5V, pin +</span><span><i style="background:#f08a24"></i>3V3</span><span><i style="background:#202020"></i>GND</span><span><i style="background:#f2c81e"></i>I2C SDA</span><span><i style="background:#2fa84f"></i>I2C SCL</span><span><i style="background:#8a4fd0"></i>SPI màn TFT</span><span><i style="background:#2f6fdc"></i>I2S mic + ampli</span><span><i style="background:#7a4a26"></i>Điều khiển motor</span><span><i style="background:#f0f0f0"></i>Tín hiệu lẻ</span><span><i style="background:#8a8f96"></i>Ra motor, ra loa</span></div></header>
+<div class="panels">
+<div class="panel" id="v1"><h2>Nhìn chéo trước-trái</h2><div class="r"></div><svg width="1180" height="1180"></svg><div class="labels"></div></div>
+<div class="panel" id="v2"><h2>Nhìn chéo sau-phải</h2><div class="r"></div><svg width="1180" height="1180"></svg><div class="labels"></div></div>
+</div>
+<footer>Đường đi: nguồn lên nóc bám góc sau-trái · bó trước (SPI + I2C) xuống mặt trong mặt trước, I2C rẽ nhánh OLED → TOF → SHT31 · bó motor xuống vách trái · bó I2S xuống vách phải · nguồn ampli vòng phía sau trên đầu pin · dây trên nóc ngắn nhất, chui xuống dưới đế.</footer>
+<div id="stage" hidden></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const CUTS=[];
+const WC = { red:0xd83a2e, orange:0xf08a24, black:0x202020, yellow:0xf2c81e, green:0x2fa84f, purple:0x8a4fd0, blue:0x2f6fdc, brown:0x7a4a26, white:0xf0f0f0, grey:0x8a8f96 };
+
+const HX=50, HZ=32, Y0=8, YF=82, YR=62, FR=14.3, R=0.8;
+const yTop = x => YR + (x+HX)/(2*HX)*(YF-YR);
+const SL = Math.atan2(YF-YR, 2*HX), CS=Math.cos(SL), SN=Math.sin(SL), RY0=yTop(0);
+const roofW = (lx,ly,lz) => [lx*CS - ly*SN, RY0 + lx*SN + ly*CS, lz];
+
+const stageEl = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const M = (o) => new THREE.MeshStandardMaterial(o);
+const mat = {
+  brass: M({color:0xd9a441, metalness:1, roughness:0.3}),
+  brassDark: M({color:0xb07a2a, metalness:1, roughness:0.38}),
+  rubber: M({color:0x2a2b2f, roughness:0.85}),
+  plastic: M({color:0xd8dadc, roughness:0.45, metalness:0.05}),
+  darkPlastic: M({color:0x3a3d42, roughness:0.6}),
+  pcbBlue: M({color:0x1d3f8a, roughness:0.6}), pcbBlack: M({color:0x141518, roughness:0.5}),
+  pcbRed: M({color:0xb3262b, roughness:0.55}), pcbPurple: M({color:0x5e3a9a, roughness:0.6}),
+  perf: M({color:0xc9a26a, roughness:0.7}), silver: M({color:0xc8ccd2, metalness:1, roughness:0.3}),
+  batt: M({color:0x2a8a4a, roughness:0.4, metalness:0.2}), holder: M({color:0x18191b, roughness:0.7}),
+  cap: M({color:0x1d2a5a, roughness:0.4}), motor: M({color:0xd8d8d8, metalness:0.9, roughness:0.35}),
+  gearbox: M({color:0xc9a040, metalness:0.8, roughness:0.4}), fpc: M({color:0xd08a2a, roughness:0.5}),
+  glass: new THREE.MeshPhysicalMaterial({color:0xfff2d8, roughness:0.05, transmission:0.85, transparent:true, opacity:0.4}),
+  led: M({color:0xaaccff, transparent:true, opacity:0.8, roughness:0.2}),
+  white: M({color:0xf2f2f2, roughness:0.5}),
+};
+const basic = c => new THREE.MeshBasicMaterial({color:c});
+
+const world = new THREE.Group(); scene.add(world);
+const roofG = new THREE.Group(); roofG.position.set(0, RY0, 0); roofG.rotation.z = SL; world.add(roofG);
+const parts = {}; let cur = null;
+function begin(id, parent=world){ const g = new THREE.Group(); g.name=id; parent.add(g); parts[id]=g; cur=g; return g; }
+function add(m){ m.castShadow = true; m.receiveShadow = true; cur.add(m); return m; }
+function box(w,h,d,m,x,y,z){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); return add(o); }
+function cyl(r,h,m,x,y,z,axis='y',seg=28){ const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m); o.position.set(x,y,z); if(axis==='x')o.rotation.z=Math.PI/2; if(axis==='z')o.rotation.x=Math.PI/2; return add(o); }
+function line(a,b,m=mat.brass,r=R){ const A=new THREE.Vector3(...a), B=new THREE.Vector3(...b);
+  const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,A.distanceTo(B),12),m);
+  o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize()); return add(o); }
+function densify(pts, step=3){ const out=[]; for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length]; out.push(a);
+  const d=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]); const n=Math.floor(d/step); for(let k=1;k<n;k++){ const t=k/n; out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]); } } return out; }
+function tube(pts, closed, m=mat.brass, r=R, dense=true){ const p = dense ? densify(pts) : pts;
+  const curve = new THREE.CatmullRomCurve3(p.map(q=>new THREE.Vector3(...q)), closed, 'centripetal');
+  return add(new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(40, p.length*3), r, 10, closed), m)); }
+function fillet(P, r, seg=10){ const out=[], n=P.length;
+  for(let i=0;i<n;i++){ const p=P[i], a=P[(i+n-1)%n], b=P[(i+1)%n];
+    const ua=[a[0]-p[0],a[1]-p[1]], ub=[b[0]-p[0],b[1]-p[1]]; const la=Math.hypot(...ua), lb=Math.hypot(...ub);
+    const u=[ua[0]/la,ua[1]/la], v=[ub[0]/lb,ub[1]/lb]; const th=Math.acos(Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1])));
+    const t=r/Math.tan(th/2); const A=[p[0]+u[0]*t,p[1]+u[1]*t], B=[p[0]+v[0]*t,p[1]+v[1]*t];
+    const bs=[u[0]+v[0],u[1]+v[1]], bl=Math.hypot(...bs); const C=[p[0]+bs[0]/bl*r/Math.sin(th/2), p[1]+bs[1]/bl*r/Math.sin(th/2)];
+    let a0=Math.atan2(A[1]-C[1],A[0]-C[0]), a1=Math.atan2(B[1]-C[1],B[0]-C[0]); let d=a1-a0; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+    for(let k=0;k<=seg;k++){ const an=a0+d*k/seg; out.push([C[0]+r*Math.cos(an), C[1]+r*Math.sin(an)]); } }
+  return out; }
+const rrect = (w,h,r) => fillet([[w/2,h/2],[-w/2,h/2],[-w/2,-h/2],[w/2,-h/2]], r, 6);
+
+/* ---------- KHUNG ---------- */
+const FRAME = ['side','crossBottom','crossFR','crossTop','rails','midRails','tray','posts','bezels','rearPosts','eyes'];
+begin('side'); for(const z of [HZ,-HZ]) tube(fillet([[HX,Y0],[HX,YF],[-HX,YR],[-HX,Y0]],FR).map(([x,y])=>[x,y,z]), true);
+begin('crossBottom'); for(const x of [34,-34]) line([x,Y0,-HZ],[x,Y0,HZ]);
+begin('crossFR'); for(const y of [24,63]) line([HX,y,-HZ],[HX,y,HZ]); for(const y of [24,49]) line([-HX,y,-HZ],[-HX,y,HZ]);
+const TOPF=[HX-20*CS, YF-20*SN], TOPR=[-HX+20*CS, YR+20*SN];
+begin('crossTop'); for(const p of [TOPF,TOPR]) line([p[0],p[1],-HZ],[p[0],p[1],HZ]);
+begin('rails'); for(const z of [15,-15]) line(roofW(-39,1.6,z), roofW(31,1.6,z));
+begin('midRails'); for(const z of [HZ,-HZ]) line([-HX,42,z],[HX,42,z]);
+begin('tray'); for(const z of [-22,0,22]) line([-40,Y0+1.6,z],[40,Y0+1.6,z]);
+begin('posts'); for(const z of [HZ,-HZ]){ for(const x of [15,29,-36]) line([x,Y0,z],[x,42,z]); }
+begin('bezels'); tube(rrect(62,39,3).map(([z,y])=>[HX+0.4,y+61.5,z]), true);
+  tube(rrect(42,15,2.5).map(([z,y])=>[HX+0.4,y+32.3,z]), true);
+begin('rearPosts'); for(const z of [20,-20]) line([-HX,24,z],[-HX,49,z]);
+begin('eyes'); for(const s of [1,-1]){ for(const [x,y] of [[-36,22.8],[-16,9.8],[2,9.8]]){ const t=new THREE.Mesh(new THREE.TorusGeometry(1.9,0.8,8,20),mat.brass); t.position.set(x,y,s*(HZ+1.6)); add(t); } }
+
+/* các đoạn đồng đã cắt, xếp trên bàn (chỉ hiện ở bước a1) */
+begin('cut'); { let z=70; for(const c of CUTS){ if(c.name.startsWith('Kẹp')) continue; for(let i=0;i<c.n;i++){ line([-c.L/2,0.8,z],[c.L/2,0.8,z]); z+=4.2; } z+=3; } }
+
+/* ---------- MODULE TRONG THÂN ---------- */
+begin('holders'); for(const z of [11,-11]){ box(76,1.6,21,mat.holder,-10,Y0+2.4,z); box(3,14,21,mat.holder,-46.5,Y0+9,z); box(3,14,21,mat.holder,26.5,Y0+9,z); }
+begin('cells'); for(const z of [11,-11]){ cyl(9.2,65,mat.batt,-10,Y0+12.4,z,'x',32); cyl(9.3,3,mat.silver,22.5,Y0+12.4,z,'x'); }
+begin('charger'); box(1.6,17,22,mat.pcbRed,-48.6,33,-6); box(4,3.4,9,mat.silver,-51,27,-6);
+begin('switch'); box(5,9,13,mat.pcbBlack,-50.5,43,9); box(3,3,4,mat.silver,-53.5,43,10);
+begin('bus'); box(22,14,1.6,mat.perf,-37,32,-30.4); box(20,2,0.6,basic(WC.red),-37,36,-29.4); box(20,2,0.6,basic(WC.black),-37,28,-29.4);
+begin('motors'); for(const s of [1,-1]){ box(12,10,15,mat.motor,22,36.8,s*15); box(12,10,9,mat.gearbox,22,36.8,s*27); box(3,4,1.2,mat.brass,22,36.8,s*7); }
+begin('mx'); box(24,21,1.6,mat.pcbBlue,-8,46,-30.4); cyl(4,12,mat.cap,-17,60,-27);
+begin('amp'); box(18,18,1.6,mat.pcbPurple,0,22,30.4); cyl(4,12,mat.cap,10,30,27);
+begin('speaker'); { const o=cyl(10,6,mat.pcbBlack,-17,46,28,'z',40); o.scale.x=1.5; }
+begin('tof'); box(2,13,25,mat.pcbBlack,50.4,15,0); for(const z of [-5,5]) cyl(1.8,1,mat.silver,51.6,15,z,'x');
+begin('oled'); box(2,12,38,mat.pcbBlue,49,32.3,0); box(0.5,7,24,mat.pcbBlack,50.1,32.3,0);
+  { const wp=[]; for(let i=0;i<=60;i++){ const z=-11+22*i/60; wp.push(new THREE.Vector3(50.45, 32.3+Math.sin(i*0.9)*Math.sin(i*0.17)*2.6, z)); }
+    cur.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(wp), new THREE.LineBasicMaterial({color:0xe8f4ff}))); }
+begin('tft'); box(3,35,57,mat.pcbBlue,48.3,61.5,0); box(0.6,28,36,mat.pcbBlack,49.9,61.5,0);
+  for(const z of [-9,9]){ const e=new THREE.Mesh(new THREE.CircleGeometry(6,40),basic(0x38e1ff)); e.position.set(50.3,63,z); e.rotation.y=Math.PI/2; cur.add(e);
+    const h=new THREE.Mesh(new THREE.CircleGeometry(1.8,20),basic(0xffffff)); h.position.set(50.4,65.5,z+2.5); h.rotation.y=Math.PI/2; cur.add(h); }
+
+/* ---------- NÓC (toạ độ theo mặt dốc) ---------- */
+begin('perf', roofG); box(72,1.6,30,mat.perf,13,3.2,0); for(const z of [11.5,-11.5]) box(56,8.5,2.5,mat.pcbBlack,13,8.25,z);
+begin('devkit', roofG); box(69,1.6,26,mat.pcbBlack,13,13.3,0); box(18,3.2,16,mat.silver,30,15.7,0); for(const z of [6,-6]) box(7,3.2,9,mat.silver,-19.5,15.7,z);
+begin('camera', roofG); box(8.5,8.5,5,mat.pcbBlack,50.5,7.5,0); cyl(3,4,mat.pcbBlack,55,7.5,0,'x'); cyl(1.8,0.5,M({color:0x2050a0,metalness:.5,roughness:.1}),57.2,7.5,0,'x');
+  { const f=box(9,0.3,9,mat.fpc,46.5,11,0); f.rotation.z=-0.5; }
+const sub = (x,z) => box(17,1.2,18,mat.perf,x,1.8,z);
+begin('irtx', roofG); sub(38,-23.5); box(14,1.4,12,mat.pcbBlue,38,3.1,-23); cyl(2.5,6,mat.led,44.5,5.5,-23,'x');
+begin('mic', roofG); sub(38,23.5); cyl(7,1.4,mat.pcbBlack,38,3.1,23,'y',40); cyl(2,1.2,mat.silver,38,4.4,23);
+begin('irrx', roofG); sub(-14,-23.5); box(14,1.4,12,mat.pcbBlue,-14,3.1,-23); box(5,6,6,mat.pcbBlack,-10,6.8,-23);
+begin('touch', roofG); sub(-14,23.5); box(15,1.4,15,mat.pcbRed,-14,3.1,23); cyl(4.5,0.6,mat.white,-14,4,23);
+begin('edison', roofG); for(const x of [-28,-36]){ const g=new THREE.Group(); g.position.set(x,6.6,0); cur.add(g);
+  const tb=new THREE.Mesh(new THREE.CylinderGeometry(4,4,24,24),mat.glass); tb.rotation.x=Math.PI/2; g.add(tb);
+  for(const z of [-15,15]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(4.2,4.2,7,24),mat.silver); c.rotation.x=Math.PI/2; c.position.z=z; c.castShadow=true; g.add(c); }
+  const f=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,22,8),basic(0xffa030)); f.rotation.x=Math.PI/2; g.add(f);
+  const pl=new THREE.PointLight(0xff9a3a, 25, 50, 2); g.add(pl);
+  for(const z of [-15,15]) box(2.5,4.5,2.5,mat.brass,x,3.4,z); }
+
+/* ---------- BÁNH XÍCH ---------- */
+const TZ=HZ+8, TW=12, S1={x:22,y:36.8,r:33}, S2={x:-36,y:22.8,r:19}, RW=[-16,2], RWY=9.8;
+function trackPath(C1,C2,T=2.5){ const r1=C1.r+T, r2=C2.r+T, dx=C2.x-C1.x, dy=C2.y-C1.y, d=Math.hypot(dx,dy);
+  const th=Math.atan2(dy,dx), al=Math.acos((r1-r2)/d), up=th+al, lo=th-al, N=160, pts=[];
+  const P=(c,r,a)=>[c.x+r*Math.cos(a), c.y+r*Math.sin(a)];
+  const A=P(C1,r1,up), B=P(C2,r2,up); for(let i=0;i<N;i++){const t=i/N; pts.push([A[0]+(B[0]-A[0])*t, A[1]+(B[1]-A[1])*t]);}
+  for(let i=0;i<N;i++) pts.push(P(C2,r2,up-(up-lo)*i/N));
+  const C=P(C2,r2,lo), D=P(C1,r1,lo); for(let i=0;i<N;i++){const t=i/N; pts.push([C[0]+(D[0]-C[0])*t, C[1]+(D[1]-C[1])*t]);}
+  const end=up-2*Math.PI; for(let i=0;i<N;i++) pts.push(P(C1,r1,lo-(lo-end)*i/N));
+  return pts; }
+function gear(cx,cy,z,r,teeth,th,m){ const g=new THREE.Group(); g.position.set(cx,cy,z); cur.add(g);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(r-3,2.2,12,64),m); g.add(ring);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(5,5,th+2,24),m); hub.rotation.x=Math.PI/2; g.add(hub);
+  for(let i=0;i<6;i++){ const a=i*Math.PI/3, sp=new THREE.Mesh(new THREE.BoxGeometry(r-6,3,th*0.7),m); sp.position.set(Math.cos(a)*(r-6)/2,Math.sin(a)*(r-6)/2,0); sp.rotation.z=a; g.add(sp); }
+  for(let i=0;i<teeth;i++){ const a=i*2*Math.PI/teeth, t=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.6,th),m); t.position.set(Math.cos(a)*(r-0.4),Math.sin(a)*(r-0.4),0); t.rotation.z=a; g.add(t); }
+  g.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); }
+begin('drive'); for(const s of [1,-1]){ gear(S1.x,S1.y,s*TZ,S1.r,64,4,mat.plastic); line([S1.x,S1.y,s*(HZ-1)],[S1.x,S1.y,s*(TZ+2)],mat.silver,1.5); }
+begin('idler'); for(const s of [1,-1]){ gear(S2.x,S2.y,s*TZ,S2.r,30,4,mat.darkPlastic); line([S2.x,S2.y,s*HZ],[S2.x,S2.y,s*(TZ+4)],mat.silver,1.5); }
+begin('road'); for(const s of [1,-1]){ for(const x of RW){ cyl(6,10,mat.darkPlastic,x,RWY,s*TZ,'z'); line([x,RWY,s*HZ],[x,RWY,s*(TZ+6)],mat.silver,1.2); } }
+begin('track'); for(const s of [1,-1]){ const p=trackPath(S2,S1); let acc=0; const seg=[0];
+  for(let i=1;i<p.length;i++){ acc+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]); seg.push(acc); }
+  let j=0; const padG=new THREE.BoxGeometry(4.4,2.6,TW), gripG=new THREE.BoxGeometry(1.4,1.6,TW*0.9);
+  for(let L=0; L<acc; L+=5.2){ while(seg[j+1]<L && j<p.length-2) j++;
+    const a=p[j], b=p[(j+1)%p.length], ang=Math.atan2(b[1]-a[1],b[0]-a[0]);
+    const pad=new THREE.Mesh(padG,mat.rubber); pad.position.set(a[0],a[1],s*TZ); pad.rotation.z=ang; add(pad);
+    const gr=new THREE.Mesh(gripG,mat.rubber); gr.position.set(a[0]+Math.sin(ang)*1.9, a[1]-Math.cos(ang)*1.9, s*TZ); gr.rotation.z=ang; cur.add(gr); } }
+
+/* ---------- DÂY ---------- */
+const wireMats={}; const wm=c=>wireMats[c]||(wireMats[c]=M({color:WC[c], roughness:0.55}));
+function bundle(pts, colors, axis=[0,0,1], gap=1.25, r=0.55){ const n=colors.length;
+  colors.forEach((c,i)=>{ const o=(i-(n-1)/2)*gap; tube(pts.map(p=>[p[0]+axis[0]*o, p[1]+axis[1]*o, p[2]+axis[2]*o]), false, wm(c), r, false); }); }
+const L = pts => pts.map(p=>roofW(...p));
+begin('w_bat'); for(const z of [11,-11]) bundle([[-44,Y0+16,z],[-45,28,z*0.4-4],[-47.2,31,-5]],['red','black'],[0,1,0],1.6,0.75);
+begin('w_pwr'); bundle([[-47.2,38,-4],[-48,42,3],[-49.5,43,7]],['red'],[0,1,0],1.6,0.75);
+  bundle([[-49.5,45,5],[-46,47,-10],[-40,42,-25],[-37,38,-29.4]],['red'],[0,1,0],1.6,0.75);
+  bundle([[-47.2,28,-13],[-43,28,-25],[-38,28.5,-29.4]],['black'],[0,1,0],1.6,0.75);
+  bundle([[-44,Y0+18,-11],[-42,27,-22],[-46,32,-29.4]],['red'],[0,1,0]);
+begin('w_mx'); bundle([[-27,34,-29.4],[-21,40,-29.4],[-16,43,-29.4]],['red','black'],[0,1,0],1.6,0.7);
+  bundle([[3,42,-29],[12,41,-16],[22,38,-8]],['grey','grey'],[0,1,0]);
+  bundle([[3,39,-29],[8,30,-6],[16,31,4],[22,38,8]],['grey','grey'],[0,1,0]);
+begin('w_amp'); bundle([[-30,38,-29.4],[-43,48,-18],[-43,48,18],[-24,34,29],[-9,26,29]],['red','black'],[0,1,0],1.6,0.7);
+  bundle([[5,28,29],[-2,36,28.5],[-8,42,27]],['grey','grey'],[1,0,0]);
+begin('w_up'); bundle([[-36,39,-29.4],[-38,52,-24],[-30,61,-13],roofW(-17,1,-6)],['red','black','white'],[0,0,1]);
+begin('w_harness');
+  bundle([[-4,56,-29.4],[0,64,-18],[2,69,-10],roofW(3,1,-7)],['brown','brown','brown','brown'],[1,0,0]);
+  bundle([[2,31,29],[4,48,26],[6,62,14],roofW(8,1,7)],['blue','blue','blue'],[1,0,0]);
+  bundle([roofW(37,1,-5),[44,73,-6],[46.4,66,-6],[46.4,62,-6]],['purple','purple','purple','white','orange','black'],[0,0,1],1.15);
+  bundle([roofW(37,1,6),[44,73,9],[46.4,56,11],[47,40,11],[47.6,32,11],[48,21,11],[48.6,15,7]],['yellow','green','orange','black'],[0,0,1]);
+begin('w_roof');
+  bundle(L([[33,3.6,19],[28,2.6,15],[22,1.2,10]]),['orange','black','black','blue','blue','blue'],[1,0,0],1.1);
+  bundle(L([[33,3.6,-19],[28,2.6,-15],[22,1.2,-10]]),['red','black','white'],[1,0,0]);
+  bundle(L([[-9,3.6,-19],[-5,2.6,-15],[0,1.2,-10]]),['orange','black','white'],[1,0,0]);
+  bundle(L([[-9,3.6,19],[-5,2.6,15],[0,1.2,10]]),['orange','black','white'],[1,0,0]);
+begin('w_edison'); for(const x of [-28,-36]){ bundle(L([[x,4,15],[x+4,1,11],[-21,1,8]]),['red'],[1,0,0]); bundle(L([[x,4,-15],[x+4,1,-11],[-21,1,-8]]),['black'],[1,0,0]); }
+
+
+
+/* ---------- SHT31 (mới) ---------- */
+begin('sht'); box(2,10,13,mat.pcbPurple,52.2,15.5,-21); cyl(2.6,0.6,mat.silver,53.4,17,-23,'x'); box(1,2.4,2.4,mat.pcbBlack,53.4,13.5,-19);
+begin('w_sht'); bundle([[47.6,26,11],[48.6,22.8,4],[49.2,22.8,-12],[50.6,19,-17],[51.2,16,-19.5]],['yellow','green','orange','black'],[0,1,0],1.1);
+
+/* ---------- khung mờ, xích mờ ---------- */
+parts.cut.visible=false;
+const ghost=new THREE.MeshBasicMaterial({color:0x8a96a3,transparent:true,opacity:0.10,depthWrite:false});
+for(const id of ['track','road','idler','drive']) parts[id].traverse(o=>{ if(o.isMesh){ o.material=ghost; o.castShadow=false; } });
+const frameMat=mat.brass.clone(); frameMat.transparent=true; frameMat.opacity=0.55;
+for(const id of ['side','crossBottom','crossFR','crossTop','rails','midRails','tray','posts','bezels','rearPosts','eyes']) parts[id].traverse(o=>{ if(o.isMesh){ o.material=frameMat; o.castShadow=false; } });
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400,1400), new THREE.MeshStandardMaterial({color:0xd3dade, roughness:0.95}));
+ground.rotation.x=-Math.PI/2; ground.position.y=-0.6; ground.receiveShadow=true; scene.add(ground);
+scene.background=new THREE.Color(0xe4e9ec);
+scene.add(new THREE.HemisphereLight(0xffffff,0x40382f,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,1.8); sun.position.set(140,260,170); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-180,right:180,top:180,bottom:-180,near:10,far:700}); scene.add(sun);
+const fill=new THREE.DirectionalLight(0xc8d6ff,0.8); fill.position.set(-160,120,-140); scene.add(fill);
+const fill2=new THREE.DirectionalLight(0xffffff,0.5); fill2.position.set(-100,140,200); scene.add(fill2);
+
+const W=1180, H=1180;
+renderer.setSize(W,H,false); renderer.setPixelRatio(1);
+const cam=new THREE.PerspectiveCamera(26,W/H,1,4000);
+
+const V = (p)=>new THREE.Vector3(...p);
+const VIEWS = [
+ { el:'v1', pos:[205,165,-235], tgt:[2,42,-4], title:'Nhìn chéo trước-trái',
+   items:[
+    {a:roofW(13,14,-8), t:'ESP32-S3 DevKit', r:[['grey','Cắm trên đế header cái, nóc'],['grey','Dây hàn ở mặt dưới đế']]},
+    {a:roofW(53,8,0), t:'Camera OV3660', r:[['grey','Cáp dẹt FPC vào đầu cắm board']]},
+    {a:roofW(44.5,5.5,-23), t:'IR phát', r:[['white','SIG → GPIO19'],['red','VCC → 5V'],['black','GND']]},
+    {a:roofW(-32,7,-14), t:'2 đèn Edison', r:[['red','+ → trở 150 Ω → 5V'],['black','− → GND']]},
+    {a:roofW(-14,7,-23), t:'IR thu', r:[['white','OUT → GPIO0'],['orange','VCC → 3V3'],['black','GND']]},
+    {a:[48.5,70,-24], t:'TFT 1.8" ST7735', r:[['purple','SCK → GPIO21'],['purple','MOSI → GPIO47'],['purple','DC → GPIO14'],['white','RST → EN'],['orange','VCC, BL → 3V3'],['black','GND, CS → GND']]},
+    {a:[50,32.3,-17], t:'OLED 0.91" (I2C 0x3C)', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VCC → 3V3'],['black','GND']]},
+    {a:[51,15,-8], t:'TOF050C (I2C 0x29)', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VIN → 3V3'],['black','GND']]},
+    {a:[53,15.5,-21], t:'SHT31 tím (I2C 0x44) · mới', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VIN → 3V3'],['black','GND']]},
+    {a:[22,36.8,-24], t:'Motor N20 trái', r:[['grey','2 dây xoắn đôi → MOTOR-A']]},
+    {a:[-8,50,-31], t:'MX1508 + tụ 470 µF', r:[['brown','IN1–IN4 → GPIO45, 46, 48, 20'],['red','VCC → 5V'],['black','GND']]},
+    {a:[-37,32,-31], t:'Thanh nguồn 5V / GND', r:[['red','5V sau công tắc'],['white','Cầu chia 100k/100k → GPIO1'],['red','Dây lên nóc: 5V, GND, đo pin']]},
+   ]},
+ { el:'v2', pos:[-215,175,235], tgt:[-2,42,4], title:'Nhìn chéo sau-phải',
+   items:[
+    {a:roofW(-17,8,0), t:'Đế nóc: nguồn vào', r:[['red','5V'],['black','GND'],['white','GPIO1 ← cầu chia']]},
+    {a:roofW(-14,4.5,23), t:'Nút chạm TTP223', r:[['white','I/O → GPIO3'],['orange','VCC → 3V3'],['black','GND']]},
+    {a:roofW(38,4.5,23), t:'Mic INMP441', r:[['blue','SCK → GPIO2'],['blue','WS → GPIO42'],['blue','SD → GPIO41'],['black','L/R → GND'],['orange','VDD → 3V3']]},
+    {a:[-17,46,31], t:'Loa oval 3W', r:[['grey','2 dây xoắn đôi → ampli +/−']]},
+    {a:[0,22,31.5], t:'MAX98357A + tụ 470 µF', r:[['blue','BCLK → GPIO2 (chung mic)'],['blue','LRC → GPIO42 (chung mic)'],['blue','DIN → GPIO40'],['red','VIN → 5V'],['black','GND']]},
+    {a:[22,36.8,24], t:'Motor N20 phải', r:[['grey','2 dây xoắn đôi → MOTOR-B']]},
+    {a:[-51,30,-6], t:'Mạch sạc + USB-C', r:[['red','B+ / B− ← 2 pin'],['red','OUT+ → công tắc'],['black','OUT− → GND thanh nguồn']]},
+    {a:[-52,43,9], t:'Công tắc gạt', r:[['red','Mạch sạc OUT+ → thanh 5V']]},
+    {a:[-10,22,14], t:'2 pin 18650 song song', r:[['red','+ nối +'],['black','− nối −']]},
+    {a:[-43,48,8], t:'Nguồn ampli', r:[['red','Vòng phía sau, trên đầu pin']]},
+   ]},
+];
+
+function sw(c){ return `<i style="background:#${WC[c].toString(16).padStart(6,'0')}"></i>`; }
+function layout(view, panel){
+  cam.position.set(...view.pos.map((v,i)=>view.tgt[i]+(v-view.tgt[i])*1.55)); cam.lookAt(...view.tgt); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  renderer.render(scene,cam);
+  const img=document.createElement('img'); img.src=renderer.domElement.toDataURL('image/png'); panel.querySelector('.r').appendChild(img);
+  const pts=view.items.map(it=>{ const v=V(it.a).project(cam); return {...it, x:(v.x+1)/2*W, y:(1-v.y)/2*H}; });
+  const left=pts.filter(p=>p.x<W/2).sort((a,b)=>a.y-b.y), right=pts.filter(p=>p.x>=W/2).sort((a,b)=>a.y-b.y);
+  const svg=panel.querySelector('svg'); const lab=panel.querySelector('.labels');
+  for(const [col,side] of [[left,'L'],[right,'R']]){
+    const boxes=col.map(p=>{ const d=document.createElement('div'); d.className='lb '+side;
+      d.innerHTML=`<b>${p.t}</b>`+p.r.map(r=>`<span>${sw(r[0])}${r[1]}</span>`).join(''); lab.appendChild(d); return {p,d}; });
+    // stack boxes, try to align with anchors
+    let y=70; const gap=12;
+    const hs=boxes.map(b=>b.d.offsetHeight); const total=hs.reduce((a,b)=>a+b,0)+gap*(boxes.length-1);
+    const avail=H-90; let slack=Math.max(0,avail-total);
+    boxes.forEach((b,i)=>{ const want=b.p.y-hs[i]/2; const maxY = H-20 - (hs.slice(i).reduce((a,c)=>a+c,0)+gap*(boxes.length-1-i));
+      y=Math.min(Math.max(y,want),maxY); b.d.style.top=y+'px';
+      const bx = side==='L' ? 18+b.d.offsetWidth : W-18-b.d.offsetWidth; const by=y+14;
+      svg.insertAdjacentHTML('beforeend',`<polyline points="${bx},${by} ${bx+(side==='L'?18:-18)},${by} ${b.p.x},${b.p.y}" fill="none" stroke="#1d2a38" stroke-width="1.4"/><circle cx="${b.p.x}" cy="${b.p.y}" r="4.5" fill="#fff" stroke="#1d2a38" stroke-width="2"/>`);
+      y+=hs[i]+gap; });
+  }
+}
+document.fonts.ready.then(()=>{ VIEWS.forEach(v=>layout(v, document.getElementById(v.el))); window.__done=true; });
+
+</script></body></html>
