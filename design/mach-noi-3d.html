@@ -192,12 +192,13 @@ function padW(id,name,side=-1,extra=0){ const g=allMods[id], d=g.userData.def; c
 const C = { pcbBlack:'#141518', red:'#b8262b', purple:'#4f2c8f', blue:'#1c4796', perf:'#c8a066' };
 
 /* ---------- ESP32-S3 DevKit trên đế ---------- */
-const J1=['3V3','3V3','RST','4','5','6','7','15','16','17','18','8','3','46','9','10','11','12','13','14','5V','G'];
-const J3=['G','TX','RX','1','2','42','41','40','39','38','37','36','35','0','45','48','47','21','20','19','G','G'];
+// Thứ tự chân theo ảnh board của shop (ESP32-S3 WROOM CAM, mỗi bên 20 chân). J1 = dãy trái, J3 = dãy phải khi nhìn từ trên, đầu robot hướng ra trước.
+const J1=['3V3','RST','4','5','6','7','15','16','17','18','8','3','46','9','10','11','12','13','14','5V'];
+const J3=['TX','RX','1','2','42','41','40','39','38','37','36','35','0','45','48','47','21','20','19','G'];
 const PINCOL={'3V3':'#f08a24','5V':'#ff6a5a','G':'#cfcfcf','RST':'#f0f0f0','21':'#b98af0','47':'#b98af0','14':'#b98af0','38':'#f2c81e','39':'#4fd06f','2':'#6ea0ff','42':'#6ea0ff','41':'#6ea0ff','40':'#6ea0ff','45':'#c08a5a','46':'#c08a5a','48':'#c08a5a','19':'#c08a5a','0':'#f0f0f0','1':'#f0f0f0','3':'#f0f0f0','20':'#f0f0f0'};
 const CAMPINS=new Set(['4','5','6','7','15','16','17','18','8','9','10','11','12','13']);
-const espPads=[]; J1.forEach((n,i)=>espPads.push(['J1:'+n+':'+i,-11.43,26.67-i*2.54,{text:n,col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
-J3.forEach((n,i)=>espPads.push(['J3:'+n+':'+i,11.43,26.67-i*2.54,{text:n,align:'right',off:[-1.45,0],col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
+const espPads=[]; J1.forEach((n,i)=>espPads.push(['J1:'+n+':'+i,11.43,24.13-i*2.54,{text:n==='RST'?'EN':n,align:'right',off:[-1.45,0],col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
+J3.forEach((n,i)=>espPads.push(['J3:'+n+':'+i,-11.43,24.13-i*2.54,{text:n==='G'?'GND':n,col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
 mod('esp',{w:26,d:69,t:1.6,color:C.pcbBlack,pads:espPads,holes:[[-11,-32.5,1.1],[11,-32.5,1.1],[-11,32.5,1.1],[11,32.5,1.1]],
   draw:(x,P,mm)=>{ x.fillStyle='#e8e8e8'; x.font=`700 ${mm(1.7)}px ${SANS}`; x.textAlign='center'; x.fillText('ESP32-S3 N16R8',...P(0,-12)); x.font=`500 ${mm(1.15)}px ${SANS}`; x.fillText('camera OV3660',...P(0,-9.6));
     x.fillStyle='#7fb3c9'; x.font=`600 ${mm(1.0)}px ${MONO}`; x.fillText('chân xanh nhạt = camera',...P(0,-7.4)); x.fillStyle='#e8e8e8'; x.font=`600 ${mm(1.2)}px ${MONO}`; x.fillText('BOOT     RST',...P(0,-25)); x.fillText('USB    COM',...P(0,-29.5)); },
@@ -205,9 +206,10 @@ mod('esp',{w:26,d:69,t:1.6,color:C.pcbBlack,pads:espPads,holes:[[-11,-32.5,1.1],
     for(const s of [-6.5,6.5]) gbox(g,9,3.2,7.5,mat.silver,s,top+1.6,-31.2);
     for(const s of [-4,4]){ gbox(g,4,1.2,4,mat.silver,s,top+0.6,-22.5); gcyl(g,1.2,1.2,mat.pcbBlack,s,top+1.4,-22.5); }
     gbox(g,14,2,4.5,M({color:0x222428,roughness:.4}),0,top+1,2); gbox(g,13,0.4,1,M({color:0xd8b25a}),0,top+2.1,0.6);
-    for(const s of [-11.43,11.43]) gbox(g,2.5,8.5,56,mat.pcbBlack,s,-0.8-4.25,0); // chân board + đầu Dupont cái
+    for(const s of [-11.43,11.43]) gbox(g,2.5,8.5,51,mat.pcbBlack,s,-0.8-4.25,0); // chân board + đầu Dupont cái
   }}, roofG, [13,13.3,0], 'roof');
-const espPin=(row,name,n=0)=>{ const arr=row==='J1'?J1:J3; let k=-1, c=0; arr.forEach((v,i)=>{ if(v===name){ if(c===n) k=i; c++; } }); return row+':'+name+':'+k; };
+// Board chỉ có 1 chân 3V3, 1 chân 5V, 1 chân GND: tìm đúng dãy có chân đó (bỏ qua số thứ tự n cũ)
+const espPin=(row,name,n=0)=>{ for(const [r,arr] of [[row,row==='J1'?J1:J3],[row==='J1'?'J3':'J1',row==='J1'?J3:J1]]){ const k=arr.indexOf(name); if(k>=0) return r+':'+name+':'+k; } throw new Error('khong co chan '+name); };
 function espW(row,name,n=0){ const g=allMods.esp, d=g.userData.def, p=d.pads.find(p=>p[0]===espPin(row,name,n));
   return [g.localToWorld(V3(p[1],-11.0,p[2])), g.localToWorld(V3(p[1],-14.5,p[2]))]; }
 

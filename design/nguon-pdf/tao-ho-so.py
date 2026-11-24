@@ -185,7 +185,9 @@ S.append(note('Địa chỉ I2C', 'TOF050C 0x29, SHT31 0x44, không trùng nhau.
 S.append(Spacer(1, 4))
 S.append(note('Chân đặc biệt', 'GPIO19 (motor IN3) và GPIO20 (IR phát) là chân USB gốc nên luôn nạp code qua cổng USB-C “COM”. GPIO20 bị kéo lên mức cao lúc bật nguồn nên dành cho IR phát (đèn IR sáng thoáng qua, vô hại), không dùng cho motor. GPIO48 có đèn RGB trên board, đèn có thể nháy khi motor phải chạy. GPIO0, 45, 46 là chân khởi động: IR thu giữ mức cao lúc nghỉ; GPIO45 phải ở mức thấp lúc bật nguồn, MX1508 thường có trở kéo xuống. Kiểm ở bước B8: cắm MX1508 mà board không chạy thì hàn trở 10k từ GPIO45 xuống GND. Camera chiếm GPIO4–13, 15–18. TOF050C và SHT31 dùng cổng I2C 0, camera tự dùng cổng I2C 1. Board đã hết chân trống (GPIO43/44 là TX/RX của cổng nạp).', WARN))
 S.append(Spacer(1, 4))
-S.append(note('Nhiều dây chung 1 chân', 'Mỗi chân ESP32 chỉ cắm được 1 đầu Dupont. Các dây cùng nối 1 chân (3V3, GND, GPIO2, GPIO42) hàn nối chung thành 1 dây trước (nối chữ Y cách đầu cắm khoảng 3 cm), bọc co nhiệt, rồi mới cắm.'))
+S.append(note('Board của shop', 'Theo ảnh shop, board ESP32-S3 WROOM CAM có mỗi bên 20 chân. Dãy trái: 3V3, EN, 4, 5, 6, 7, 15, 16, 17, 18, 8, 3, 46, 9, 10, 11, 12, 13, 14, 5V. Dãy phải: TX, RX, 1, 2, 42, 41, 40, 39, 38, 37, 36, 35, 0, 45, 48, 47, 21, 20, 19, GND. Luôn cắm theo chữ in cạnh chân, không đếm thứ tự. Đèn D2 trên board nối GPIO2 nên sáng mờ khi robot nghe, nói: bình thường. Nếu mặt sau board có khe thẻ TF: khe này dùng chung GPIO38, 39, 40, không cắm thẻ nhớ.'))
+S.append(Spacer(1, 4))
+S.append(note('Nhiều dây chung 1 chân', 'Board chỉ có 1 chân 3V3, 1 chân 5V, 1 chân GND, mỗi chân chỉ cắm được 1 đầu Dupont. Các dây cùng nối 1 chân (3V3, 5V, GND, GPIO2, GPIO42) hàn chụm thành 1 dây trước: tuốt dây, xoắn chung vào 1 mối cách đầu cắm khoảng 3 cm, hàn, bọc co nhiệt, rồi mới cắm.'))
 S.append(Paragraph('Mã màu dây', H3))
 S.append(tbl(None, [['Đỏ · 5V sau công tắc, pin +', 'Tím · SPI màn TFT'], ['Cam · 3V3 từ ESP32', 'Xanh dương · I2S mic + ampli'], ['Đen · GND', 'Nâu · Điều khiển motor'],
     ['Vàng · I2C SDA', 'Trắng · Tín hiệu lẻ: nút, IR, đo pin'], ['Xanh lá · I2C SCL', 'Xám · Dây ra motor, ra loa']], [257.5, 257.5]))
@@ -319,9 +321,9 @@ S += step('C7', 'Đế ESP32 trên nóc', 'Board nằm trên tấm PCB lỗ, dâ
   'Bắt PCB lên 2 ray nóc bằng 4 vòng dây đồng mảnh.', 'Kéo 3 dây Dupont từ thanh nguồn lên: đỏ cắm 5V, đen cắm GND, trắng (cầu chia) cắm GPIO1.', 'Cổng USB-C quay ra sau.'],
  ['Board không xê dịch; cắm được cáp USB-C khi board nằm trên nóc.'])
 S += step('C8', 'Cắm các bó dây vào ESP32', 'Làm từng bó, xong bó nào soát bó đó.', None,
- ['Dây cùng nối 1 chân (3V3, GND, GPIO2, GPIO42) hàn nối chữ Y thành 1 dây trước, bọc co nhiệt, rồi mới cắm đầu Dupont.', 'Bó motor (4 nâu): đầu Dupont cái cắm vào GPIO45, 46, 19, 48.', 'Bó I2S (3 xanh dương): GPIO2, 42, 40; SCK, WS của mic nối chữ Y vào 2 dây BCLK, LRC.', 'Bó trước, nhánh TFT: 3 tím vào GPIO21, 47, 14; trắng RST vào EN; cam vào 3V3; đen vào GND.',
+ ['Dây cùng nối 1 chân (3V3, 5V, GND, GPIO2, GPIO42) hàn chụm thành 1 dây trước, bọc co nhiệt, rồi mới cắm đầu Dupont.', 'Bó motor (4 nâu): đầu Dupont cái cắm vào GPIO45, 46, 19, 48.', 'Bó I2S (3 xanh dương): GPIO2, 42, 40; SCK, WS của mic hàn chụm vào 2 dây BCLK, LRC.', 'Bó trước, nhánh TFT: 3 tím vào GPIO21, 47, 14; trắng RST vào EN; cam vào 3V3; đen vào GND.',
   'Bó trước, nhánh I2C (vàng, xanh lá, cam, đen): GPIO38, 39, 3V3, GND.', 'Mỗi bó bọc co nhiệt 5 mm cách nhau 20 mm, buộc vào thanh đồng bằng 2 vòng dây đồng mảnh.'],
- ['Soát từng dây cắm đúng chân theo bảng 4.3.', 'Nạp lại qbk-test.bin (công tắc tắt khi nạp), chạy lại như phần B: màn, TOF, SHT31, loa, motor đều OK.'])
+ ['Soát từng dây cắm đúng chân theo chữ in trên board (không đếm thứ tự) và bảng 4.3.', 'Nạp lại qbk-test.bin (công tắc tắt khi nạp), chạy lại như phần B: màn, TOF, SHT31, loa, motor đều OK.'])
 S += step('C9', 'Module trên nóc: camera, mic, IR, nút chạm', None, None,
  ['Cắm cáp dẹt camera, dán camera ở mép trước nóc, ống kính ló ra trước.', 'Mỗi module nhỏ gắn trên một mẩu PCB lỗ, bắc từ ray nóc sang thanh hông: IR phát trước-trái (LED hướng ra trước), mic trước-phải, IR thu sau-trái, nút chạm sau-phải.', 'Dây đi sát mặt PCB, đầu Dupont cắm vào chân board.'],
  ['Camera, mic, IR thu, nút chạm đều báo OK trên qbk-test.'])

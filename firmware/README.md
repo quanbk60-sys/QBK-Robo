@@ -73,6 +73,8 @@ Bài nhạc có sẵn: Chúc mừng sinh nhật, Kìa con bướm vàng, Ngôi s
 
 Lý do: GPIO20 là chân USB D+, bị kéo lên mức cao lúc bật nguồn. Nối motor vào đó thì motor phải giật khi khởi động. Nối IR phát thì vô hại.
 GPIO48 có đèn RGB trên board: đèn này có thể nháy màu khi motor phải chạy, không ảnh hưởng gì.
+Board của shop (theo ảnh): mỗi bên 20 chân. Dãy trái: 3V3, EN, 4, 5, 6, 7, 15, 16, 17, 18, 8, 3, 46, 9, 10, 11, 12, 13, 14, 5V. Dãy phải: TX, RX, 1, 2, 42, 41, 40, 39, 38, 37, 36, 35, 0, 45, 48, 47, 21, 20, 19, GND. Chỉ có 1 chân 3V3, 1 chân 5V, 1 chân GND: các dây cùng chân hàn chụm thành 1 dây rồi mới cắm. Cắm theo chữ in cạnh chân, không đếm thứ tự.
+Đèn D2 trên board nối GPIO2 (xung nhịp I2S) nên sáng mờ khi nghe, nói: bình thường. Nếu mặt sau board có khe thẻ TF: khe dùng chung GPIO38, 39, 40, không cắm thẻ nhớ.
 Các chân còn lại giữ như bảng 4.3 trong hồ sơ. Camera: GPIO4–13, 15–18. TOF050C và SHT31 dùng cổng I2C 0 (camera dùng cổng 1).
 
 ## Mã nguồn
