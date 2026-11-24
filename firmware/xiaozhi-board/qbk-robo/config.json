@@ -1,0 +1,10 @@
+{
+    "type": "qbk-robo",
+    "target": "esp32s3",
+    "builds": [
+        {
+            "name": "qbk-robo",
+            "sdkconfig_append": []
+        }
+    ]
+}

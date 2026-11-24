@@ -1,0 +1,30 @@
+diff --git a/main/CMakeLists.txt b/main/CMakeLists.txt
+index 02ec0ff..1bdf9fa 100644
+--- a/main/CMakeLists.txt
++++ b/main/CMakeLists.txt
+@@ -893,6 +893,11 @@ elseif(CONFIG_BOARD_TYPE_ELECTRON_BOT)
+     set(BUILTIN_TEXT_FONT font_noto_sans_basic_20_4)
+     set(BUILTIN_ICON_FONT font_material_symbols_20_4)
+     set(DEFAULT_EMOJI_COLLECTION otto-gif)
++elseif(CONFIG_BOARD_TYPE_QBK_ROBO)
++    set(BOARD_DIR "qbk-robo")
++    set(BUILTIN_TEXT_FONT font_noto_sans_basic_14_1)
++    set(BUILTIN_ICON_FONT font_material_symbols_14_1)
++    set(DEFAULT_EMOJI_COLLECTION noto-color-emoji_32)
+ elseif(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI_CAM)
+     set(BOARD_DIR "bread-compact-wifi-s3cam")
+     set(BUILTIN_TEXT_FONT font_noto_sans_basic_16_4)
+diff --git a/main/Kconfig.projbuild b/main/Kconfig.projbuild
+index ae0d435..35ee0fe 100644
+--- a/main/Kconfig.projbuild
++++ b/main/Kconfig.projbuild
+@@ -181,6 +181,9 @@ choice BOARD_TYPE
+     config BOARD_TYPE_BREAD_COMPACT_WIFI_CAM
+         bool "Bread Compact Wi-Fi + LCD + Camera (面包板)"
+         depends on IDF_TARGET_ESP32S3
++    config BOARD_TYPE_QBK_ROBO
++        bool "QBK-Robo (khung dong, banh xich, camera)"
++        depends on IDF_TARGET_ESP32S3
+     config BOARD_TYPE_CHD_ESP32S3_BOX
+         bool "CHD ESP32-S3-BOX (虫洞)"
+         depends on IDF_TARGET_ESP32S3
