@@ -17,12 +17,12 @@ svg{position:absolute;inset:0;z-index:1}
 .lb.L{left:18px} .lb.R{right:18px}
 footer{padding:0 36px 24px;font-size:16px;color:#4d5964}
 </style></head><body>
-<header><div><h1>QBK-Robo · Sơ đồ nối dây 3D</h1><p>Chân GPIO là bản tạm, chờ sơ đồ board của shop. Khung đồng và bánh xích vẽ mờ để thấy dây.</p></div><div class="legend"><span><i style="background:#d83a2e"></i>5V, pin +</span><span><i style="background:#f08a24"></i>3V3</span><span><i style="background:#202020"></i>GND</span><span><i style="background:#f2c81e"></i>I2C SDA</span><span><i style="background:#2fa84f"></i>I2C SCL</span><span><i style="background:#8a4fd0"></i>SPI màn TFT</span><span><i style="background:#2f6fdc"></i>I2S mic + ampli</span><span><i style="background:#7a4a26"></i>Điều khiển motor</span><span><i style="background:#f0f0f0"></i>Tín hiệu lẻ</span><span><i style="background:#8a8f96"></i>Ra motor, ra loa</span></div></header>
+<header><div><h1>QBK-Robo · Sơ đồ nối dây 3D</h1><p>Chân GPIO là bản tạm, chờ sơ đồ board của shop. Đã bỏ OLED 0.91": sóng âm hiện ở mép dưới màn TFT. Khung đồng và bánh xích vẽ mờ để thấy dây.</p></div><div class="legend"><span><i style="background:#d83a2e"></i>5V, pin +</span><span><i style="background:#f08a24"></i>3V3</span><span><i style="background:#202020"></i>GND</span><span><i style="background:#f2c81e"></i>I2C SDA</span><span><i style="background:#2fa84f"></i>I2C SCL</span><span><i style="background:#8a4fd0"></i>SPI màn TFT</span><span><i style="background:#2f6fdc"></i>I2S mic + ampli</span><span><i style="background:#7a4a26"></i>Điều khiển motor</span><span><i style="background:#f0f0f0"></i>Tín hiệu lẻ</span><span><i style="background:#8a8f96"></i>Ra motor, ra loa</span></div></header>
 <div class="panels">
 <div class="panel" id="v1"><h2>Nhìn chéo trước-trái</h2><div class="r"></div><svg width="1180" height="1180"></svg><div class="labels"></div></div>
 <div class="panel" id="v2"><h2>Nhìn chéo sau-phải</h2><div class="r"></div><svg width="1180" height="1180"></svg><div class="labels"></div></div>
 </div>
-<footer>Đường đi: nguồn lên nóc bám góc sau-trái · bó trước (SPI + I2C) xuống mặt trong mặt trước, I2C rẽ nhánh OLED → TOF → SHT31 · bó motor xuống vách trái · bó I2S xuống vách phải · nguồn ampli vòng phía sau trên đầu pin · dây trên nóc ngắn nhất, chui xuống dưới đế.</footer>
+<footer>Đường đi: nguồn lên nóc bám góc sau-trái · bó trước (SPI + I2C) xuống mặt trong mặt trước, I2C xuống TOF050C rồi rẽ sang SHT31 · bó motor xuống vách trái · bó I2S xuống vách phải · nguồn ampli vòng phía sau trên đầu pin · dây trên nóc ngắn nhất, chui xuống dưới đế.</footer>
 <div id="stage" hidden></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
@@ -105,7 +105,7 @@ begin('midRails'); for(const z of [HZ,-HZ]) line([-HX,42,z],[HX,42,z]);
 begin('tray'); for(const z of [-22,0,22]) line([-40,Y0+1.6,z],[40,Y0+1.6,z]);
 begin('posts'); for(const z of [HZ,-HZ]){ for(const x of [15,29,-36]) line([x,Y0,z],[x,42,z]); }
 begin('bezels'); tube(rrect(62,39,3).map(([z,y])=>[HX+0.4,y+61.5,z]), true);
-  tube(rrect(42,15,2.5).map(([z,y])=>[HX+0.4,y+32.3,z]), true);
+
 begin('rearPosts'); for(const z of [20,-20]) line([-HX,24,z],[-HX,49,z]);
 begin('eyes'); for(const s of [1,-1]){ for(const [x,y] of [[-36,22.8],[-16,9.8],[2,9.8]]){ const t=new THREE.Mesh(new THREE.TorusGeometry(1.9,0.8,8,20),mat.brass); t.position.set(x,y,s*(HZ+1.6)); add(t); } }
 
@@ -123,13 +123,12 @@ begin('mx'); box(24,21,1.6,mat.pcbBlue,-8,46,-30.4); cyl(4,12,mat.cap,-17,60,-27
 begin('amp'); box(18,18,1.6,mat.pcbPurple,0,22,30.4); cyl(4,12,mat.cap,10,30,27);
 begin('speaker'); { const o=cyl(10,6,mat.pcbBlack,-17,46,28,'z',40); o.scale.x=1.5; }
 begin('tof'); box(2,13,25,mat.pcbBlack,50.4,15,0); for(const z of [-5,5]) cyl(1.8,1,mat.silver,51.6,15,z,'x');
-begin('oled'); box(2,12,38,mat.pcbBlue,49,32.3,0); box(0.5,7,24,mat.pcbBlack,50.1,32.3,0);
-  { const wp=[]; for(let i=0;i<=60;i++){ const z=-11+22*i/60; wp.push(new THREE.Vector3(50.45, 32.3+Math.sin(i*0.9)*Math.sin(i*0.17)*2.6, z)); }
-    cur.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(wp), new THREE.LineBasicMaterial({color:0xe8f4ff}))); }
 begin('tft'); box(3,35,57,mat.pcbBlue,48.3,61.5,0); box(0.6,28,36,mat.pcbBlack,49.9,61.5,0);
   for(const z of [-9,9]){ const e=new THREE.Mesh(new THREE.CircleGeometry(6,40),basic(0x38e1ff)); e.position.set(50.3,63,z); e.rotation.y=Math.PI/2; cur.add(e);
     const h=new THREE.Mesh(new THREE.CircleGeometry(1.8,20),basic(0xffffff)); h.position.set(50.4,65.5,z+2.5); h.rotation.y=Math.PI/2; cur.add(h); }
 
+{ const wp=[]; for(let i=0;i<=60;i++){ const z=-10+20*i/60; wp.push(new THREE.Vector3(50.45, 52+Math.sin(i*0.9)*Math.sin(i*0.17)*2.2, z)); }
+  const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints(wp), new THREE.LineBasicMaterial({color:0x38e1ff})); parts.tft.add(ln); }
 /* ---------- NÓC (toạ độ theo mặt dốc) ---------- */
 begin('perf', roofG); box(72,1.6,30,mat.perf,13,3.2,0); for(const z of [11.5,-11.5]) box(56,8.5,2.5,mat.pcbBlack,13,8.25,z);
 begin('devkit', roofG); box(69,1.6,26,mat.pcbBlack,13,13.3,0); box(18,3.2,16,mat.silver,30,15.7,0); for(const z of [6,-6]) box(7,3.2,9,mat.silver,-19.5,15.7,z);
@@ -237,8 +236,7 @@ const VIEWS = [
     {a:roofW(44.5,5.5,-23), t:'IR phát', r:[['white','SIG → GPIO19'],['red','VCC → 5V'],['black','GND']]},
     {a:roofW(-32,7,-14), t:'2 đèn Edison', r:[['red','+ → trở 150 Ω → 5V'],['black','− → GND']]},
     {a:roofW(-14,7,-23), t:'IR thu', r:[['white','OUT → GPIO0'],['orange','VCC → 3V3'],['black','GND']]},
-    {a:[48.5,70,-24], t:'TFT 1.8" ST7735', r:[['purple','SCK → GPIO21'],['purple','MOSI → GPIO47'],['purple','DC → GPIO14'],['white','RST → EN'],['orange','VCC, BL → 3V3'],['black','GND, CS → GND']]},
-    {a:[50,32.3,-17], t:'OLED 0.91" (I2C 0x3C)', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VCC → 3V3'],['black','GND']]},
+    {a:[48.5,70,-24], t:'TFT 1.8" ST7735 · mắt + miệng sóng âm', r:[['purple','SCK → GPIO21'],['purple','MOSI → GPIO47'],['purple','DC → GPIO14'],['white','RST → EN'],['orange','VCC, BL → 3V3'],['black','GND, CS → GND']]},
     {a:[51,15,-8], t:'TOF050C (I2C 0x29)', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VIN → 3V3'],['black','GND']]},
     {a:[53,15.5,-21], t:'SHT31 tím (I2C 0x44) · mới', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VIN → 3V3'],['black','GND']]},
     {a:[22,36.8,-24], t:'Motor N20 trái', r:[['grey','2 dây xoắn đôi → MOTOR-A']]},
