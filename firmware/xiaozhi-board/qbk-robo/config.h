@@ -2,7 +2,8 @@
 #define _BOARD_CONFIG_H_
 
 // QBK-Robo: ESP32-S3 N16R8 + camera OV3660, khung đồng, 2 bánh xích N20.
-// Bảng chân theo hồ sơ dự án (mục 4.3), đã đổi IN3 motor sang GPIO19, IR phát sang GPIO48.
+// Bảng chân theo hồ sơ dự án (mục 4.3), có đổi: MX1508 IN3 = GPIO19, IN4 = GPIO48, IR phát = GPIO20.
+// GPIO20 (USB D+) bị kéo lên mức cao lúc khởi động nên dùng cho IR phát (vô hại), không dùng cho motor.
 
 #include <driver/gpio.h>
 #include <hal/adc_types.h>
@@ -59,7 +60,7 @@
 #define DISPLAY_SPI_MODE 0
 #define DISPLAY_SPI_HZ   (27 * 1000 * 1000)
 
-// ---------- I2C: TOF050C (0x29) + SHT31 (0x44) ----------
+// ---------- I2C: TOF050C (0x29) + SHT31 (0x44), cổng I2C 0 (camera dùng cổng 1) ----------
 #define SENSOR_I2C_SDA GPIO_NUM_38
 #define SENSOR_I2C_SCL GPIO_NUM_39
 #define TOF_I2C_ADDR   0x29
@@ -69,7 +70,7 @@
 #define MOTOR_L_IN1 GPIO_NUM_45
 #define MOTOR_L_IN2 GPIO_NUM_46
 #define MOTOR_R_IN1 GPIO_NUM_19
-#define MOTOR_R_IN2 GPIO_NUM_20
+#define MOTOR_R_IN2 GPIO_NUM_48   // đèn RGB trên board có thể nháy khi motor phải chạy, không sao
 #define MOTOR_L_INVERT false      // đảo nếu motor trái quay ngược
 #define MOTOR_R_INVERT false      // đảo nếu motor phải quay ngược
 #define MOTOR_PWM_HZ   1000
@@ -77,7 +78,7 @@
 
 // ---------- IR điều hòa ----------
 #define IR_RX_GPIO GPIO_NUM_0
-#define IR_TX_GPIO GPIO_NUM_48
+#define IR_TX_GPIO GPIO_NUM_20
 
 // ---------- Đo pin: cầu chia 100k/100k vào GPIO1 (ADC1 kênh 0) ----------
 #define BATTERY_ADC_UNIT    ADC_UNIT_1

@@ -22,6 +22,9 @@
 class Motors {
 public:
     void Init() {
+        // Kéo cả 4 chân xuống thấp ngay để motor không tự quay lúc khởi động
+        const gpio_num_t all[4] = {MOTOR_L_IN1, MOTOR_L_IN2, MOTOR_R_IN1, MOTOR_R_IN2};
+        for (auto p : all) { gpio_reset_pin(p); gpio_set_direction(p, GPIO_MODE_OUTPUT); gpio_set_level(p, 0); }
         ledc_timer_config_t t = {};
         t.speed_mode = LEDC_LOW_SPEED_MODE;
         t.duty_resolution = LEDC_TIMER_10_BIT;
@@ -69,7 +72,7 @@ class SensorBus {
 public:
     bool Init() {
         i2c_master_bus_config_t cfg = {};
-        cfg.i2c_port = I2C_NUM_1;           // I2C 0 dành cho camera (SCCB)
+        cfg.i2c_port = I2C_NUM_0;           // thư viện camera tự lấy cổng I2C 1 cho SCCB
         cfg.sda_io_num = SENSOR_I2C_SDA;
         cfg.scl_io_num = SENSOR_I2C_SCL;
         cfg.clk_source = I2C_CLK_SRC_DEFAULT;
@@ -233,7 +236,13 @@ public:
             }
             if (ev.num_symbols < 8) continue;           // nhiễu
             if (got_any) frames.push_back(GapSymbol(40000));
-            for (size_t i = 0; i < ev.num_symbols; i++) frames.push_back(ev.received_symbols[i].val);
+            for (size_t i = 0; i < ev.num_symbols; i++) {
+                // Mắt thu IR xuất mức THẤP khi có sóng mang: đảo mức để khi phát, mức 1 = bật sóng mang 38 kHz
+                rmt_symbol_word_t s = ev.received_symbols[i];
+                s.level0 = !s.level0;
+                s.level1 = !s.level1;
+                frames.push_back(s.val);
+            }
             got_any = true;
             if (frames.size() > 1800) break;
         }

@@ -36,11 +36,11 @@ static const char* TAG = "QBK-TEST";
 #define PIN_SCL 39
 #define PIN_TOUCH 3
 #define PIN_IR_RX 0
-#define PIN_IR_TX 48
+#define PIN_IR_TX 20   // GPIO20 (USB D+) lên mức cao lúc khởi động: dùng cho IR, không dùng cho motor
 #define PIN_ML1 45
 #define PIN_ML2 46
 #define PIN_MR1 19
-#define PIN_MR2 20
+#define PIN_MR2 48
 
 // ---- Trạng thái ----
 static volatile int g_ir_edges = 0;
@@ -146,7 +146,7 @@ static bool sht_read(float* t, float* h) {
     return true;
 }
 static void i2c_init(void) {
-    i2c_master_bus_config_t c = {.i2c_port = I2C_NUM_1, .sda_io_num = PIN_SDA, .scl_io_num = PIN_SCL, .clk_source = I2C_CLK_SRC_DEFAULT,
+    i2c_master_bus_config_t c = {.i2c_port = I2C_NUM_0,   /* camera tự dùng cổng 1 */ .sda_io_num = PIN_SDA, .scl_io_num = PIN_SCL, .clk_source = I2C_CLK_SRC_DEFAULT,
                                  .glitch_ignore_cnt = 7, .flags.enable_internal_pullup = 1};
     ESP_ERROR_CHECK(i2c_new_master_bus(&c, &i2c_bus));
     printf("I2C scan (SDA=38, SCL=39):");
@@ -197,6 +197,8 @@ static void mic_task(void* a) {
 
 // ======================= Motor, IR, ADC, camera =======================
 static void motors_init(void) {
+    const int all[5] = {PIN_ML1, PIN_ML2, PIN_MR1, PIN_MR2, PIN_IR_TX};
+    for (int i = 0; i < 5; i++) { gpio_reset_pin(all[i]); gpio_set_direction(all[i], GPIO_MODE_OUTPUT); gpio_set_level(all[i], 0); }
     ledc_timer_config_t t = {.speed_mode = LEDC_LOW_SPEED_MODE, .duty_resolution = LEDC_TIMER_10_BIT, .timer_num = LEDC_TIMER_2, .freq_hz = 1000, .clk_cfg = LEDC_AUTO_CLK};
     ledc_timer_config(&t);
     const int pins[4] = {PIN_ML1, PIN_ML2, PIN_MR1, PIN_MR2};
@@ -267,10 +269,10 @@ static void action_sequence(void) {
 
 void app_main(void) {
     printf("\n===== QBK-Robo TEST =====\n");
+    motors_init();
     display_init();
     i2c_init();
     audio_init();
-    motors_init();
     ir_rx_init();
     adc_init();
     camera_init();

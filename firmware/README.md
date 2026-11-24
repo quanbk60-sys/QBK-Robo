@@ -65,8 +65,15 @@ Bài nhạc có sẵn: Chúc mừng sinh nhật, Kìa con bướm vàng, Ngôi s
 
 ## Chân GPIO (đã đổi so với hồ sơ bản đầu)
 
-MX1508 IN3 dùng **GPIO19**, IR phát dùng **GPIO48** (tránh đèn RGB có sẵn trên board ở GPIO48 làm nháy khi chạy motor).
-Các chân còn lại giữ như bảng 4.3 trong hồ sơ. Camera: GPIO4–13, 15–18.
+| Nối | Hồ sơ cũ | Firmware |
+|---|---|---|
+| MX1508 IN3 | GPIO48 | **GPIO19** |
+| MX1508 IN4 | GPIO20 | **GPIO48** |
+| IR phát SIG | GPIO19 | **GPIO20** |
+
+Lý do: GPIO20 là chân USB D+, bị kéo lên mức cao lúc bật nguồn. Nối motor vào đó thì motor phải giật khi khởi động. Nối IR phát thì vô hại.
+GPIO48 có đèn RGB trên board: đèn này có thể nháy màu khi motor phải chạy, không ảnh hưởng gì.
+Các chân còn lại giữ như bảng 4.3 trong hồ sơ. Camera: GPIO4–13, 15–18. TOF050C và SHT31 dùng cổng I2C 0 (camera dùng cổng 1).
 
 ## Mã nguồn
 
@@ -85,6 +92,12 @@ git apply ../firmware/xiaozhi-board/xiaozhi-register-board.patch
 cp -r ../firmware/xiaozhi-board/qbk-robo main/boards/
 python scripts/build.py qbk-robo --language vi-VN
 ```
+
+## Đã kiểm tra
+
+- Biên dịch cả 2 firmware không lỗi, không cảnh báo trong code của board.
+- Chạy trên giả lập QEMU ESP32-S3: khởi động, PSRAM, giữ motor đứng yên lúc khởi động đều qua. Giả lập không có ADC và SPI màn hình nên không thử được phần ngoại vi.
+- Chưa chạy trên board thật.
 
 ## Chỉnh khi chạy thật
 

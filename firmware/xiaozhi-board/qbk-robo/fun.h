@@ -85,6 +85,14 @@ private:
         return true;
     }
 
+    static inline std::atomic<bool> sound_running_{false};
+    static void SoundTask(void* arg) {
+        auto* song = static_cast<const SongInfo*>(arg);
+        Application::GetInstance().PlaySound(std::string_view(reinterpret_cast<const char*>(song->data), song->size));
+        sound_running_ = false;
+        vTaskDelete(nullptr);
+    }
+
     static void SetFace(const char* emotion, const std::string& msg) {
         auto& app = Application::GetInstance();
         std::string m = msg; std::string e = emotion;
@@ -108,12 +116,14 @@ private:
             vTaskDelay(pdMS_TO_TICKS(600));
             while (!self->cancel_ && app.GetDeviceState() == kDeviceStateSpeaking && esp_timer_get_time() - t0 < 15000000) vTaskDelay(pdMS_TO_TICKS(100));
             if (!self->cancel_ && app.GetDeviceState() == kDeviceStateListening) {
-                app.Schedule([]() { Application::GetInstance().SetDeviceState(kDeviceStateIdle); });
-                vTaskDelay(pdMS_TO_TICKS(300));
+                app.StopListening();                 // báo máy chủ dừng nghe rồi về chế độ nghỉ
+                vTaskDelay(pdMS_TO_TICKS(400));
             }
             if (!self->cancel_) {
                 SetFace("happy", std::string("♪ ") + song->title);
-                app.PlaySound(std::string_view(reinterpret_cast<const char*>(song->data), song->size));
+                // Nạp nhạc ở tác vụ riêng: PlaySound chờ hàng đợi giải mã nên chạy chung sẽ làm điệu nhảy trễ
+                self->sound_running_ = true;
+                xTaskCreate(SoundTask, "qbk_snd", 4096, (void*)song, 4, nullptr);
             }
         }
 
@@ -121,7 +131,8 @@ private:
         const int64_t end = esp_timer_get_time() + (int64_t)self->req_seconds_ * 1000000;
         int step = 0, emo = 0;
         int64_t next_face = 0;
-        while (!self->cancel_ && style && esp_timer_get_time() < end) {
+        while (!self->cancel_ && esp_timer_get_time() < end) {
+            if (!style) { vTaskDelay(pdMS_TO_TICKS(50)); continue; }   // chỉ phát nhạc: vẫn đợi hết bài để chạm là tắt được
             const DanceStep& s = style->steps[step % style->count];
             int l = s.l, r = s.r;
             // Không lao về phía vật cản
@@ -139,7 +150,10 @@ private:
             step++;
         }
         self->motors_.Stop();
-        if (song && self->cancel_) app.GetAudioService().ResetDecoder();   // dừng nhạc khi bị hủy
+        if (song && self->cancel_) {   // dừng nhạc khi bị hủy
+            for (int i = 0; i < 40 && sound_running_.load(); i++) { app.GetAudioService().ResetDecoder(); vTaskDelay(pdMS_TO_TICKS(50)); }
+            app.GetAudioService().ResetDecoder();
+        }
         SetFace("happy", "");
         self->running_ = false;
         vTaskDelete(nullptr);

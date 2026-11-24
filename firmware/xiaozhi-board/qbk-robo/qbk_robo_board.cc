@@ -292,11 +292,11 @@ private:
 
 public:
     QbkRoboBoard() : touch_button_(TOUCH_BUTTON_GPIO, true /* TTP223: mức cao khi chạm */, 3000) {
+        motors_.Init();          // đầu tiên: giữ motor đứng yên
         InitializeSpi();
         InitializeLcdDisplay();
         InitializeButtons();
         InitializeCamera();
-        motors_.Init();
         sensors_.Init();
         if (!ir_.Init()) ESP_LOGW(TAG, "Khong khoi tao duoc IR");
         battery_ = new AdcBatteryMonitor(BATTERY_ADC_UNIT, BATTERY_ADC_CHANNEL, BATTERY_R_UPPER, BATTERY_R_LOWER, GPIO_NUM_NC);
