@@ -1,0 +1,554 @@
+<title>Video lắp QBK-Robo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600;800&family=JetBrains+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: full-bleed 3D stage, caption card docked bottom, player bar under it */
+:root{--bg:#e6eaed;--panel:rgba(255,255,255,.94);--ink:#17202a;--muted:#56626d;--line:#cfd6dc;--brass:#99681a;--hot:#ff2d78;
+ --f-display:"Barlow Semi Condensed","Arial Narrow",sans-serif;--f-body:"Be Vietnam Pro",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,monospace}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);overflow:hidden}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.chap{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));font:700 22px var(--f-display);background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brass);padding:6px 14px;border-radius:6px}
+.prog{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(0,0,0,.08)} .prog i{display:block;height:100%;background:var(--brass);width:0}
+.big{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 34px;max-width:min(86vw,760px);box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.big b{display:block;font:700 40px var(--f-display);text-wrap:balance}
+.big span{display:block;margin-top:6px;color:var(--muted);font-size:18px}
+.cap{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(92vw,980px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 18px;box-shadow:0 6px 24px rgba(0,0,0,.12);display:grid;gap:3px}
+.cap .n{font:700 14px var(--f-mono);color:var(--hot);letter-spacing:.06em;min-height:1em}
+.cap .l1{font:600 20px var(--f-body)}
+.cap .l2{font:500 18px var(--f-body);color:#2b3a48}
+.jtag{position:fixed;transform:translate(14px,-130%);font:700 15px var(--f-mono);background:var(--hot);color:#fff;padding:3px 9px;border-radius:5px;white-space:nowrap;pointer-events:none}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--panel);border-top:1px solid var(--line)}
+.bar button{font:600 14px var(--f-body);border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.bar button.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bar button:focus-visible,.bar input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.bar input[type=range]{flex:1;min-width:0;accent-color:#99681a}
+.bar .tm{font:600 13px var(--f-mono);color:var(--muted);white-space:nowrap}
+body.rec .bar{display:none} body.rec .cap{bottom:28px}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted)}
+@media (max-width:640px){ .cap .l1{font-size:15px} .cap .l2{font-size:14px} .big b{font-size:26px} .big span{font-size:14px} .chap{font-size:16px} .bar .hide-s{display:none} }
+</style>
+<div id="stage"></div><div class="prog"><i id="pbar"></i></div>
+<div class="chap" id="cChap">QBK-Robo</div>
+<div class="big" id="bigTitle" hidden></div>
+<div class="jtag" id="jtag" hidden></div>
+<div class="cap"><div class="n" id="cNum"></div><div class="l1" id="cL1"></div><div class="l2" id="cL2"></div></div>
+<div class="bar"><button id="bPrev" class="hide-s">⏮ Mối trước</button><button id="bPlay" class="pri">▶ Phát</button><button id="bNext">Mối sau ⏭</button>
+<input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Tua video"><span class="tm" id="tm">0:00</span><button id="bSpeed" class="hide-s">1×</button></div>
+<div class="loading" id="loading">Đang dựng mô hình…</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+await Promise.race([Promise.all(['700 12px "JetBrains Mono"','700 12px "Be Vietnam Pro"','800 12px "Be Vietnam Pro"'].map(f=>document.fonts.load(f))), new Promise(r=>setTimeout(r,2500))]).catch(()=>{});
+const WC = { red:0xd83a2e, orange:0xf08a24, black:0x202020, yellow:0xf2c81e, green:0x2fa84f, purple:0x8a4fd0, blue:0x2f6fdc, brown:0x7a4a26, white:0xf0f0f0, grey:0x8a8f96 };
+const HX=50, HZ=32, Y0=8, YF=82, YR=62, FR=14.3, R=0.8;
+const yTop = x => YR + (x+HX)/(2*HX)*(YF-YR);
+const SL = Math.atan2(YF-YR, 2*HX), CS=Math.cos(SL), SN=Math.sin(SL), RY0=yTop(0);
+const roofW = (lx,ly,lz) => [lx*CS - ly*SN, RY0 + lx*SN + ly*CS, lz];
+
+const stageEl = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const M = (o) => new THREE.MeshStandardMaterial(o);
+const mat = {
+  brass: M({color:0xd9a441, metalness:1, roughness:0.3}),
+  brassDark: M({color:0xb07a2a, metalness:1, roughness:0.38}),
+  rubber: M({color:0x2a2b2f, roughness:0.85}),
+  plastic: M({color:0xd8dadc, roughness:0.45, metalness:0.05}),
+  darkPlastic: M({color:0x3a3d42, roughness:0.6}),
+  pcbBlue: M({color:0x1d3f8a, roughness:0.6}), pcbBlack: M({color:0x141518, roughness:0.5}),
+  pcbRed: M({color:0xb3262b, roughness:0.55}), pcbPurple: M({color:0x5e3a9a, roughness:0.6}),
+  perf: M({color:0xc9a26a, roughness:0.7}), silver: M({color:0xc8ccd2, metalness:1, roughness:0.3}),
+  batt: M({color:0x2a8a4a, roughness:0.4, metalness:0.2}), holder: M({color:0x18191b, roughness:0.7}),
+  cap: M({color:0x1d2a5a, roughness:0.4}), motor: M({color:0xd8d8d8, metalness:0.9, roughness:0.35}),
+  gearbox: M({color:0xc9a040, metalness:0.8, roughness:0.4}), fpc: M({color:0xd08a2a, roughness:0.5}),
+  glass: new THREE.MeshPhysicalMaterial({color:0xfff2d8, roughness:0.05, transmission:0.85, transparent:true, opacity:0.4}),
+  led: M({color:0xaaccff, transparent:true, opacity:0.8, roughness:0.2}),
+  white: M({color:0xf2f2f2, roughness:0.5}),
+};
+const basic = c => new THREE.MeshBasicMaterial({color:c});
+
+const world = new THREE.Group(); scene.add(world);
+const roofG = new THREE.Group(); roofG.position.set(0, RY0, 0); roofG.rotation.z = SL; world.add(roofG);
+const parts = {}; let cur = null;
+function begin(id, parent=world){ const g = new THREE.Group(); g.name=id; parent.add(g); parts[id]=g; cur=g; return g; }
+function add(m){ m.castShadow = true; m.receiveShadow = true; cur.add(m); return m; }
+function box(w,h,d,m,x,y,z){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); return add(o); }
+function cyl(r,h,m,x,y,z,axis='y',seg=28){ const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m); o.position.set(x,y,z); if(axis==='x')o.rotation.z=Math.PI/2; if(axis==='z')o.rotation.x=Math.PI/2; return add(o); }
+function line(a,b,m=mat.brass,r=R){ const A=new THREE.Vector3(...a), B=new THREE.Vector3(...b);
+  const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,A.distanceTo(B),12),m);
+  o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize()); return add(o); }
+function densify(pts, step=3){ const out=[]; for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length]; out.push(a);
+  const d=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]); const n=Math.floor(d/step); for(let k=1;k<n;k++){ const t=k/n; out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]); } } return out; }
+function tube(pts, closed, m=mat.brass, r=R, dense=true){ const p = dense ? densify(pts) : pts;
+  const curve = new THREE.CatmullRomCurve3(p.map(q=>new THREE.Vector3(...q)), closed, 'centripetal');
+  return add(new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(40, p.length*3), r, 10, closed), m)); }
+function fillet(P, r, seg=10){ const out=[], n=P.length;
+  for(let i=0;i<n;i++){ const p=P[i], a=P[(i+n-1)%n], b=P[(i+1)%n];
+    const ua=[a[0]-p[0],a[1]-p[1]], ub=[b[0]-p[0],b[1]-p[1]]; const la=Math.hypot(...ua), lb=Math.hypot(...ub);
+    const u=[ua[0]/la,ua[1]/la], v=[ub[0]/lb,ub[1]/lb]; const th=Math.acos(Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1])));
+    const t=r/Math.tan(th/2); const A=[p[0]+u[0]*t,p[1]+u[1]*t], B=[p[0]+v[0]*t,p[1]+v[1]*t];
+    const bs=[u[0]+v[0],u[1]+v[1]], bl=Math.hypot(...bs); const C=[p[0]+bs[0]/bl*r/Math.sin(th/2), p[1]+bs[1]/bl*r/Math.sin(th/2)];
+    let a0=Math.atan2(A[1]-C[1],A[0]-C[0]), a1=Math.atan2(B[1]-C[1],B[0]-C[0]); let d=a1-a0; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+    for(let k=0;k<=seg;k++){ const an=a0+d*k/seg; out.push([C[0]+r*Math.cos(an), C[1]+r*Math.sin(an)]); } }
+  return out; }
+const rrect = (w,h,r) => fillet([[w/2,h/2],[-w/2,h/2],[-w/2,-h/2],[w/2,-h/2]], r, 6);
+
+/* ---------- KHUNG ---------- */
+const FRAME = ['side','crossBottom','crossFR','crossTop','rails','midRails','tray','posts','bezels','rearPosts','eyes'];
+begin('side'); for(const z of [HZ,-HZ]) tube(fillet([[HX,Y0],[HX,YF],[-HX,YR],[-HX,Y0]],FR).map(([x,y])=>[x,y,z]), true);
+begin('crossBottom'); for(const x of [34,-34]) line([x,Y0,-HZ],[x,Y0,HZ]);
+begin('crossFR'); for(const y of [24,63]) line([HX,y,-HZ],[HX,y,HZ]); for(const y of [24,49]) line([-HX,y,-HZ],[-HX,y,HZ]);
+const TOPF=[HX-20*CS, YF-20*SN], TOPR=[-HX+20*CS, YR+20*SN];
+begin('crossTop'); for(const p of [TOPF,TOPR]) line([p[0],p[1],-HZ],[p[0],p[1],HZ]);
+begin('rails'); for(const z of [15,-15]) line(roofW(-39,1.6,z), roofW(31,1.6,z));
+begin('midRails'); for(const z of [HZ,-HZ]) line([-HX,42,z],[HX,42,z]);
+begin('tray'); for(const z of [-22,0,22]) line([-40,Y0+1.6,z],[40,Y0+1.6,z]);
+begin('posts'); for(const z of [HZ,-HZ]){ for(const x of [15,29,-36]) line([x,Y0,z],[x,42,z]); }
+begin('bezels'); tube(rrect(62,39,3).map(([z,y])=>[HX+0.4,y+61.5,z]), true);
+begin('rearPosts'); for(const z of [20,-20]) line([-HX,24,z],[-HX,49,z]);
+begin('eyes'); for(const s of [1,-1]){ for(const [x,y] of [[-36,22.8],[-16,9.8],[2,9.8]]){ const t=new THREE.Mesh(new THREE.TorusGeometry(1.9,0.8,8,20),mat.brass); t.position.set(x,y,s*(HZ+1.6)); add(t); } }
+
+
+
+
+/* ---------- BÁNH XÍCH ---------- */
+const TZ=HZ+8, TW=12, S1={x:22,y:36.8,r:33}, S2={x:-36,y:22.8,r:19}, RW=[-16,2], RWY=9.8;
+function trackPath(C1,C2,T=2.5){ const r1=C1.r+T, r2=C2.r+T, dx=C2.x-C1.x, dy=C2.y-C1.y, d=Math.hypot(dx,dy);
+  const th=Math.atan2(dy,dx), al=Math.acos((r1-r2)/d), up=th+al, lo=th-al, N=160, pts=[];
+  const P=(c,r,a)=>[c.x+r*Math.cos(a), c.y+r*Math.sin(a)];
+  const A=P(C1,r1,up), B=P(C2,r2,up); for(let i=0;i<N;i++){const t=i/N; pts.push([A[0]+(B[0]-A[0])*t, A[1]+(B[1]-A[1])*t]);}
+  for(let i=0;i<N;i++) pts.push(P(C2,r2,up-(up-lo)*i/N));
+  const C=P(C2,r2,lo), D=P(C1,r1,lo); for(let i=0;i<N;i++){const t=i/N; pts.push([C[0]+(D[0]-C[0])*t, C[1]+(D[1]-C[1])*t]);}
+  const end=up-2*Math.PI; for(let i=0;i<N;i++) pts.push(P(C1,r1,lo-(lo-end)*i/N));
+  return pts; }
+function gear(cx,cy,z,r,teeth,th,m){ const g=new THREE.Group(); g.position.set(cx,cy,z); cur.add(g);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(r-3,2.2,12,64),m); g.add(ring);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(5,5,th+2,24),m); hub.rotation.x=Math.PI/2; g.add(hub);
+  for(let i=0;i<6;i++){ const a=i*Math.PI/3, sp=new THREE.Mesh(new THREE.BoxGeometry(r-6,3,th*0.7),m); sp.position.set(Math.cos(a)*(r-6)/2,Math.sin(a)*(r-6)/2,0); sp.rotation.z=a; g.add(sp); }
+  for(let i=0;i<teeth;i++){ const a=i*2*Math.PI/teeth, t=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.6,th),m); t.position.set(Math.cos(a)*(r-0.4),Math.sin(a)*(r-0.4),0); t.rotation.z=a; g.add(t); }
+  g.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); }
+begin('drive'); for(const s of [1,-1]){ gear(S1.x,S1.y,s*TZ,S1.r,64,4,mat.plastic); line([S1.x,S1.y,s*(HZ-1)],[S1.x,S1.y,s*(TZ+2)],mat.silver,1.5); }
+begin('idler'); for(const s of [1,-1]){ gear(S2.x,S2.y,s*TZ,S2.r,30,4,mat.darkPlastic); line([S2.x,S2.y,s*HZ],[S2.x,S2.y,s*(TZ+4)],mat.silver,1.5); }
+begin('road'); for(const s of [1,-1]){ for(const x of RW){ cyl(6,10,mat.darkPlastic,x,RWY,s*TZ,'z'); line([x,RWY,s*HZ],[x,RWY,s*(TZ+6)],mat.silver,1.2); } }
+begin('track'); for(const s of [1,-1]){ const p=trackPath(S2,S1); let acc=0; const seg=[0];
+  for(let i=1;i<p.length;i++){ acc+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]); seg.push(acc); }
+  let j=0; const padG=new THREE.BoxGeometry(4.4,2.6,TW), gripG=new THREE.BoxGeometry(1.4,1.6,TW*0.9);
+  for(let L=0; L<acc; L+=5.2){ while(seg[j+1]<L && j<p.length-2) j++;
+    const a=p[j], b=p[(j+1)%p.length], ang=Math.atan2(b[1]-a[1],b[0]-a[0]);
+    const pad=new THREE.Mesh(padG,mat.rubber); pad.position.set(a[0],a[1],s*TZ); pad.rotation.z=ang; add(pad);
+    const gr=new THREE.Mesh(gripG,mat.rubber); gr.position.set(a[0]+Math.sin(ang)*1.9, a[1]-Math.cos(ang)*1.9, s*TZ); gr.rotation.z=ang; cur.add(gr); } }
+
+
+/* =====================================================================
+   MODULE THẬT: mạch in có chữ chân, lỗ hàn, chip; dây hàn vào đúng lỗ
+   ===================================================================== */
+const PX = 18; // pixel / mm cho texture
+const V3 = (x,y,z)=>new THREE.Vector3(x,y,z);
+function circ(ctx,x,y,r){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
+function rrectPath(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function texFrom(c){ const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
+function canvasFor(w,d){ const c=document.createElement('canvas'); c.width=Math.round(w*PX); c.height=Math.round(d*PX); return c; }
+const MONO='"JetBrains Mono",ui-monospace,Menlo,monospace', SANS='"Be Vietnam Pro",Arial,sans-serif';
+
+/* def: {w,d,t,color,silk,pads:[[name,x,z,{text,align,off,fs,col}]],holes,draw(ctx,P,mm),extra(g,top)} */
+function pcb(def){
+  const g=new THREE.Group(); const c=canvasFor(def.w,def.d), x=c.getContext('2d');
+  const P=(mx,mz)=>[(mx+def.w/2)*PX,(mz+def.d/2)*PX]; const mm=v=>v*PX;
+  x.fillStyle=def.color; x.fillRect(0,0,c.width,c.height);
+  if(def.perf){ x.fillStyle='rgba(0,0,0,.28)'; for(let i=1.27;i<def.w;i+=2.54) for(let j=1.27;j<def.d;j+=2.54){ circ(x,mm(i),mm(j),mm(0.42)); } x.fillStyle='rgba(205,160,70,.55)'; for(let i=1.27;i<def.w;i+=2.54) for(let j=1.27;j<def.d;j+=2.54){ x.beginPath(); x.arc(mm(i),mm(j),mm(0.75),0,Math.PI*2); x.lineWidth=mm(0.25); x.strokeStyle='rgba(190,140,60,.6)'; x.stroke(); } }
+  (def.holes||[]).forEach(([hx,hz,r])=>{ const [px,py]=P(hx,hz); x.fillStyle='#e2c36a'; circ(x,px,py,mm(r+0.55)); x.fillStyle='#1a1a1a'; circ(x,px,py,mm(r)); });
+  def.draw && def.draw(x,P,mm);
+  for(const [name,px0,pz0,o={}] of def.pads){ const [cx,cy]=P(px0,pz0);
+    x.fillStyle='#e9c35c'; circ(x,cx,cy,mm(0.95)); x.fillStyle='#3b3020'; circ(x,cx,cy,mm(0.45));
+    if(o.text!==''){ x.fillStyle=o.col||def.silk||'#f4f4f4'; x.font=`700 ${mm(o.fs||1.25)}px ${MONO}`; x.textBaseline='middle'; x.textAlign=o.align||'left';
+      const off=o.off||[1.45,0]; x.fillText(o.text||name, cx+mm(off[0]), cy+mm(off[1])); } }
+  const top=new THREE.MeshStandardMaterial({map:texFrom(c), roughness:.5, metalness:.05});
+  // mặt dưới: lỗ hàn + tên chân (nhìn từ phía hàn dây)
+  const c2=canvasFor(def.w,def.d), x2=c2.getContext('2d'); const Q=(mx,mz)=>[(mx+def.w/2)*PX,(def.d/2-mz)*PX];
+  x2.fillStyle=def.edge||def.color; x2.fillRect(0,0,c2.width,c2.height); x2.fillStyle='rgba(0,0,0,.18)'; x2.fillRect(0,0,c2.width,c2.height);
+  for(const [name,px0,pz0,o={}] of def.pads){ const [cx,cy]=Q(px0,pz0); x2.fillStyle='#e9c35c'; circ(x2,cx,cy,mm(1.0)); x2.fillStyle='#3b3020'; circ(x2,cx,cy,mm(0.45));
+    if(o.text!==''){ x2.fillStyle='#ffffff'; x2.font=`700 ${mm((o.fs||1.25)*0.95)}px ${MONO}`; x2.textBaseline='middle'; const off=o.off||[1.45,0]; x2.save(); x2.translate(cx+mm(off[0]), cy-mm(off[1])); x2.scale(-1,1); x2.textAlign=o.align==='right'?'left':o.align==='center'?'center':'right'; x2.fillText(o.text||name,0,0); x2.restore(); } }
+  const bot=new THREE.MeshStandardMaterial({map:texFrom(c2), roughness:.6});
+  const side=new THREE.MeshStandardMaterial({color:def.edge||def.color, roughness:.65});
+  const m=new THREE.Mesh(new THREE.BoxGeometry(def.w,def.t,def.d),[side,side,top,bot,side,side]); m.castShadow=m.receiveShadow=true; g.add(m);
+  def.extra && def.extra(g, def.t/2);
+  g.userData.def=def; return g;
+}
+const BASIS={ up:[[1,0,0],[0,1,0],[0,0,1]], roof:[[0,0,-1],[0,1,0],[1,0,0]], front:[[0,0,-1],[1,0,0],[0,-1,0]],
+  left:[[-1,0,0],[0,0,-1],[0,-1,0]], right:[[1,0,0],[0,0,1],[0,-1,0]], back:[[0,0,1],[-1,0,0],[0,-1,0]] };
+function place(g,parent,pos,face){ const b=BASIS[face]; g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(V3(...b[0]),V3(...b[1]),V3(...b[2]))); g.position.set(...pos); parent.add(g); return g; }
+function addTo(g, mesh){ mesh.castShadow=true; mesh.receiveShadow=true; g.add(mesh); return mesh; }
+function gbox(g,w,h,d,m,x,y,z){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); return addTo(g,o); }
+function gcyl(g,r,h,m,x,y,z,axis='y',seg=28){ const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m); o.position.set(x,y,z); if(axis==='x')o.rotation.z=Math.PI/2; if(axis==='z')o.rotation.x=Math.PI/2; return addTo(g,o); }
+function labelTex(w,d,bg,draw){ const c=canvasFor(w,d), x=c.getContext('2d'); x.fillStyle=bg; x.fillRect(0,0,c.width,c.height); draw(x,v=>v*PX); return new THREE.MeshStandardMaterial({map:texFrom(c), roughness:.45}); }
+function topTexBox(g,w,h,d,bg,draw,x,y,z,sideCol,metal=0){ const top=labelTex(w,d,bg,draw); top.metalness=metal; const s=new THREE.MeshStandardMaterial({color:sideCol||bg, roughness:.5, metalness:metal});
+  const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),[s,s,top,s,s,s]); o.position.set(x,y,z); return addTo(g,o); }
+function chip(g,w,d,x,z,top,label){ return topTexBox(g,w,1.1,d,'#16171a',(c,mm)=>{ if(label){ c.fillStyle='#9aa0a6'; c.font=`600 ${mm(Math.min(1.1,w/6))}px ${MONO}`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(label,mm(w/2),mm(d/2)); } c.fillStyle='#555'; circ(c,mm(0.8),mm(0.8),mm(0.3)); },x,top+0.55,z,'#16171a'); }
+
+const allMods={};
+function mod(id,def,parent,pos,face){ const g=pcb(def); g.name=id; place(g,parent,pos,face); allMods[id]=g; return g; }
+function padW(id,name,side=-1,extra=0){ const g=allMods[id], d=g.userData.def; const p=d.pads.find(p=>p[0]===name); if(!p) throw new Error('pad '+id+':'+name);
+  return [g.localToWorld(V3(p[1], side*(d.t/2+0.15), p[2])), g.localToWorld(V3(p[1], side*(d.t/2+3+extra), p[2]))]; }
+
+const C = { pcbBlack:'#141518', red:'#b8262b', purple:'#4f2c8f', blue:'#1c4796', perf:'#c8a066' };
+
+/* ---------- ESP32-S3 DevKit trên đế ---------- */
+const J1=['3V3','3V3','RST','4','5','6','7','15','16','17','18','8','3','46','9','10','11','12','13','14','5V','G'];
+const J3=['G','TX','RX','1','2','42','41','40','39','38','37','36','35','0','45','48','47','21','20','19','G','G'];
+const PINCOL={'3V3':'#f08a24','5V':'#ff6a5a','G':'#cfcfcf','RST':'#f0f0f0','21':'#b98af0','47':'#b98af0','14':'#b98af0','38':'#f2c81e','39':'#4fd06f','2':'#6ea0ff','42':'#6ea0ff','41':'#6ea0ff','40':'#6ea0ff','45':'#c08a5a','46':'#c08a5a','48':'#c08a5a','20':'#c08a5a','0':'#f0f0f0','1':'#f0f0f0','3':'#f0f0f0','19':'#f0f0f0'};
+const CAMPINS=new Set(['4','5','6','7','15','16','17','18','8','9','10','11','12','13']);
+const espPads=[]; J1.forEach((n,i)=>espPads.push(['J1:'+n+':'+i,-11.43,26.67-i*2.54,{text:n,col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
+J3.forEach((n,i)=>espPads.push(['J3:'+n+':'+i,11.43,26.67-i*2.54,{text:n,align:'right',off:[-1.45,0],col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
+mod('esp',{w:26,d:69,t:1.6,color:C.pcbBlack,pads:espPads,holes:[[-11,-32.5,1.1],[11,-32.5,1.1],[-11,32.5,1.1],[11,32.5,1.1]],
+  draw:(x,P,mm)=>{ x.fillStyle='#e8e8e8'; x.font=`700 ${mm(1.7)}px ${SANS}`; x.textAlign='center'; x.fillText('ESP32-S3 N16R8',...P(0,-12)); x.font=`500 ${mm(1.15)}px ${SANS}`; x.fillText('camera OV3660',...P(0,-9.6));
+    x.fillStyle='#7fb3c9'; x.font=`600 ${mm(1.0)}px ${MONO}`; x.fillText('chân xanh nhạt = camera',...P(0,-7.4)); x.fillStyle='#e8e8e8'; x.font=`600 ${mm(1.2)}px ${MONO}`; x.fillText('BOOT     RST',...P(0,-25)); x.fillText('USB    COM',...P(0,-29.5)); },
+  extra:(g,top)=>{ topTexBox(g,18,3.1,25.5,'#c9cdd2',(c,mm)=>{ c.fillStyle='#2b2f35'; c.font=`700 ${mm(1.5)}px ${MONO}`; c.textAlign='center'; c.fillText('ESP32-S3-WROOM-1',mm(9),mm(12)); c.font=`600 ${mm(1.3)}px ${MONO}`; c.fillText('N16R8',mm(9),mm(14.5)); c.fillText('16MB · 8MB PSRAM',mm(9),mm(17)); },0,top+1.55,17.5,'#b9bec4',0.7);
+    for(const s of [-6.5,6.5]) gbox(g,9,3.2,7.5,mat.silver,s,top+1.6,-31.2);
+    for(const s of [-4,4]){ gbox(g,4,1.2,4,mat.silver,s,top+0.6,-22.5); gcyl(g,1.2,1.2,mat.pcbBlack,s,top+1.4,-22.5); }
+    gbox(g,14,2,4.5,M({color:0x222428,roughness:.4}),0,top+1,2); gbox(g,13,0.4,1,M({color:0xd8b25a}),0,top+2.1,0.6);
+    for(const s of [-11.43,11.43]) gbox(g,2.5,8.5,56,mat.pcbBlack,s,-0.8-4.25,0); // header cái
+  }}, roofG, [13,13.3,0], 'roof');
+const espPin=(row,name,n=0)=>{ const arr=row==='J1'?J1:J3; let k=-1, c=0; arr.forEach((v,i)=>{ if(v===name){ if(c===n) k=i; c++; } }); return row+':'+name+':'+k; };
+function espW(row,name,n=0){ const g=allMods.esp, d=g.userData.def, p=d.pads.find(p=>p[0]===espPin(row,name,n));
+  return [g.localToWorld(V3(p[1],-11.0,p[2])), g.localToWorld(V3(p[1],-14.5,p[2]))]; }
+
+mod('perf',{w:30,d:72,t:1.6,color:C.perf,perf:true,pads:[],
+  draw:(x,P,mm)=>{ x.fillStyle='rgba(200,40,40,.85)'; x.fillRect(...P(9,-30),mm(1.3),mm(10)); x.fillStyle='rgba(20,20,20,.85)'; x.fillRect(...P(11.5,-30),mm(1.3),mm(10));
+    x.fillStyle='#f4f4f4'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('đế nóc · header cái',...P(0,-33.5)); }}, roofG, [13,3.2,0], 'roof');
+{ const g=allMods.perf; for(const z of [-26,-22]){ gcyl(g,0.8,6,M({color:0xd6c08a,roughness:.5}),-10,0.8+0.8,z,'x'); } }
+
+/* ---------- Camera OV3660 ---------- */
+{ const g=new THREE.Group(); place(g,roofG,[52,7.5,0],'front');
+  topTexBox(g,8.5,1.2,8.5,'#151618',(c,mm)=>{},0,0,0,'#151618');
+  gcyl(g,3.4,3.6,M({color:0x101112,roughness:.35}),0,2.4,0); gcyl(g,2.2,0.6,M({color:0x1d3f9a,metalness:.6,roughness:.08}),0,4.5,0);
+  gcyl(g,1.2,0.3,M({color:0x88aaff,metalness:.2,roughness:0,emissive:0x112244}),0,4.85,0);
+  allMods.cam=g;
+  const fg=new THREE.Group(); roofG.add(fg); allMods.fpc=fg; const fpc=M({color:0xd28b2c,roughness:.5,metalness:.1});
+  const r1=new THREE.Mesh(new THREE.BoxGeometry(18,0.25,8),fpc); r1.position.set(41.5,10.4,0); r1.rotation.z=-0.32; fg.add(r1);
+  const r2=new THREE.Mesh(new THREE.BoxGeometry(14,0.25,8),fpc); r2.position.set(27.5,15.3,0); r2.rotation.z=0.03; fg.add(r2); }
+
+/* ---------- Module nhỏ trên nóc ---------- */
+const subsG=new THREE.Group(); roofG.add(subsG); allMods.subs=subsG;
+const subPerf=(x,z)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(17,1.2,18),M({color:0xc8a066,roughness:.7})); o.position.set(x,1.8,z); o.castShadow=true; subsG.add(o); };
+subPerf(38,-23.5); subPerf(38,23.5); subPerf(-14,-23.5); subPerf(-14,23.5);
+const p3 = (names,z,dx=2.54)=>names.map((n,i)=>[n,(i-(names.length-1)/2)*dx,z,{off:[0,1.9],align:'center',fs:1.05}]);
+mod('irtx',{w:14,d:12,t:1.4,color:C.blue,pads:p3(['SIG','VCC','GND'],-4.2),holes:[[-5.5,3.5,1]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('IR TX',...P(1.5,3.2)); },
+  extra:(g,top)=>{ gcyl(g,2.5,5,M({color:0x9cc4ff,transparent:true,opacity:.75,roughness:.1}),2,top+2.6,6.5,'z'); const s=new THREE.Mesh(new THREE.SphereGeometry(2.5,20,12),M({color:0x9cc4ff,transparent:true,opacity:.75,roughness:.1})); s.position.set(2,top+2.6,9); g.add(s); chip(g,3,3,-3,2.5,top,''); }}, roofG,[38,3.1,-23],'roof');
+mod('irrx',{w:14,d:12,t:1.4,color:C.pcbBlack,pads:p3(['OUT','GND','VCC'],-4.2),holes:[[-5.5,3.5,1]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('VS1838B',...P(-1,4.6)); },
+  extra:(g,top)=>{ gbox(g,6,4.5,5,M({color:0x111111,roughness:.3}),2,top+2.25,2.5); const s=new THREE.Mesh(new THREE.SphereGeometry(1.8,20,12,0,Math.PI*2,0,Math.PI/2),M({color:0x222222,roughness:.15})); s.position.set(2,top+2.25,5); s.rotation.x=Math.PI/2; g.add(s); }}, roofG,[-14,3.1,-23],'roof');
+mod('touch',{w:15,d:11,t:1.4,color:'#c42a2e',pads:[['I/O',-5.6,-2.54],['VCC',-5.6,0],['GND',-5.6,2.54]],
+  draw:(x,P,mm)=>{ x.strokeStyle='#f4f4f4'; x.lineWidth=mm(0.35); x.beginPath(); x.arc(...P(2.6,0),mm(4.2),0,Math.PI*2); x.stroke(); x.fillStyle='#f4f4f4'; x.font=`700 ${mm(1.3)}px ${MONO}`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('TOUCH',...P(2.6,0)); }}, roofG,[-14,3.1,23],'roof');
+mod('mic',{w:14,d:15,t:1.4,color:C.pcbBlack,pads:['SCK','WS','L/R','SD','VDD','GND'].map((n,i)=>[n,-5.3,-6.35+i*2.54]),
+  draw:(x,P,mm)=>{ x.fillStyle='#d4b45c'; circ(x,...P(2.6,0),mm(3.4)); x.fillStyle='#141518'; circ(x,...P(2.6,0),mm(2.5)); x.fillStyle='#d4b45c'; circ(x,...P(2.6,0),mm(0.8)); x.fillStyle='#fff'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('INMP441',...P(2.6,6.2)); }}, roofG,[38,3.1,23],'roof');
+
+/* ---------- Đèn Edison ---------- */
+const edG=new THREE.Group(); roofG.add(edG); allMods.edison=edG;
+for(const x of [-28,-36]){ const g=new THREE.Group(); g.position.set(x,6.6,0); edG.add(g);
+  const tb=new THREE.Mesh(new THREE.CylinderGeometry(4,4,24,24),mat.glass); tb.rotation.x=Math.PI/2; g.add(tb);
+  for(const z of [-15,15]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(4.2,4.2,7,24),mat.silver); c.rotation.x=Math.PI/2; c.position.z=z; c.castShadow=true; g.add(c); }
+  const f=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,22,8),new THREE.MeshBasicMaterial({color:0xffa030})); f.rotation.x=Math.PI/2; g.add(f);
+  g.add(new THREE.PointLight(0xff9a3a, 22, 50, 2));
+  for(const z of [-15,15]){ const k=new THREE.Mesh(new THREE.BoxGeometry(2.5,4.5,2.5),mat.brass); k.position.set(x,3.4,z); edG.add(k); } }
+
+/* ---------- Mặt trước ---------- */
+mod('tft',{w:57,d:35,t:1.6,color:'#b8262b',pads:['LED','SCK','SDA','A0','RESET','CS','GND','VCC'].map((n,i)=>[n,-26,-8.89+i*2.54,{fs:1.15}]),holes:[[-25.5,-15,1.2],[-25.5,15,1.2],[25.5,-15,1.2],[25.5,15,1.2]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.2)}px ${MONO}`; x.save(); x.translate(...P(-17.8,0)); x.rotate(-Math.PI/2); x.textAlign='center'; x.fillText('1.8 TFT SPI 128x160',0,0); x.restore(); },
+  extra:(g,top)=>{ topTexBox(g,44,2.6,33,'#0b0d10',(c,mm)=>{ c.fillStyle='#05070a'; c.fillRect(mm(4),mm(2.5),mm(36),mm(28));
+      c.fillStyle='#38e1ff'; for(const ex of [14,30]){ rrectPath(c,mm(ex-4.5),mm(8),mm(9),mm(12),mm(3)); c.fill(); }
+      c.fillStyle='#fff'; for(const ex of [14,30]) circ(c,mm(ex+1.6),mm(10.5),mm(1.4));
+      c.strokeStyle='#38e1ff'; c.lineWidth=mm(0.5); c.beginPath(); for(let i=0;i<=80;i++){ const xx=11+22*i/80; const yy=25+Math.sin(i*0.7)*Math.sin(i*0.13)*2.2; i?c.lineTo(mm(xx),mm(yy)):c.moveTo(mm(xx),mm(yy)); } c.stroke(); },4.5,top+1.3,0,'#16181c'); }}, world,[47.6,61.5,0],'front');
+mod('tof',{w:22,d:12,t:1.6,color:C.pcbBlack,pads:['VIN','GND','SCL','SDA','GPIO1','XSHUT'].map((n,i)=>[n,-6.35+i*2.54,-4.0,{off:[0,1.85],align:'center',fs:0.82}]),holes:[[-9,0,1.1],[9,0,1.1]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.0)}px ${MONO}`; x.textAlign='center'; x.fillText('TOF050C',...P(0,4.8)); },
+  extra:(g,top)=>{ gbox(g,4.8,1,2.6,M({color:0x0c0c0c,roughness:.2}),0,top+0.5,1.7); for(const s of [-1,1]) gcyl(g,0.55,0.3,M({color:0x553355,roughness:0,metalness:.4}),s*1.2,top+1.1,1.7); }}, world,[50.2,14.2,0],'front');
+mod('sht',{w:13,d:10.5,t:1.6,color:'#5a3192',pads:['VIN','GND','SCL','SDA'].map((n,i)=>[n,-5.2,-3.81+i*2.54,{fs:1.0}]),holes:[[3.6,-2,1.5]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(0.95)}px ${MONO}`; x.textAlign='center'; x.fillText('SHT31',...P(3.2,1.6)); },
+  extra:(g,top)=>{ chip(g,2.5,2.5,3.6,3.2,top,''); }}, world,[50.6,14.6,-20.5],'front');
+
+/* ---------- Vách trái: thanh nguồn, MX1508 ---------- */
+const GX=i=>-8.89+i*2.54, GZ=j=>-5.08+j*2.54;
+mod('bus',{w:22.8,d:14,t:1.6,color:C.perf,perf:true,pads:[['A1',GX(0),GZ(0),{text:''}],['C1',GX(2),GZ(0),{text:''}],['E1',GX(4),GZ(0),{text:''}],['G1',GX(6),GZ(0),{text:''}],
+   ['A5',GX(0),GZ(4),{text:''}],['C5',GX(2),GZ(4),{text:''}],['E5',GX(4),GZ(4),{text:''}],['G5',GX(6),GZ(4),{text:''}],['A3',GX(0),GZ(2),{text:''}],['E3',GX(4),GZ(2),{text:''}],['F3',GX(5),GZ(2),{text:''}],['G3',GX(6),GZ(2),{text:''}],['F5',GX(5),GZ(4),{text:''}]],
+  draw:(x,P,mm)=>{ x.fillStyle='rgba(210,40,40,.55)'; x.fillRect(...P(-10,-5.8),mm(20.5),mm(1.4)); x.fillStyle='rgba(25,25,25,.55)'; x.fillRect(...P(-10,4.4),mm(20.5),mm(1.4));
+    x.fillStyle='#2a1a08'; x.font=`700 ${mm(0.9)}px ${MONO}`; x.textAlign='center'; 'ABCDEFGH'.split('').forEach((c,i)=>x.fillText(c,...P(GX(i),-6.4))); x.textAlign='right'; [1,2,3,4,5].forEach((n,j)=>x.fillText(n,...P(-10.2,GZ(j)+0.3))); }}, world,[-37,32,-30.4],'left');
+const BUSALIAS={IN5V:'A1',MX5V:'C1',AMP5V:'E1',UP5V:'G1',INGND:'A5',MXGND:'C5',AMPGND:'E5',UPGND:'G5',BAT:'A3',MID:'G3'};
+mod('mx',{w:24,d:21,t:1.6,color:'#c22d30',pads:[...['+','−','IN1','IN2','IN3','IN4'].map((n,i)=>[n,10.2,-6.35+i*2.54,{align:'right',off:[-1.45,0]}]),
+   ['MA1',-10.2,-7.5,{text:''}],['MA2',-10.2,-4.5,{text:''}],['MB1',-10.2,4.5,{text:''}],['MB2',-10.2,7.5,{text:''}]],holes:[[-9.8,0,1.1]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.05)}px ${MONO}`; x.textAlign='left'; x.fillText('MOTOR-A',...P(-8.6,-6)); x.fillText('MOTOR-B',...P(-8.6,6)); x.font=`700 ${mm(1.3)}px ${MONO}`; x.textAlign='center'; x.fillText('MX1508',...P(-1,9)); },
+  extra:(g,top)=>{ chip(g,5,4,-1,-1,top,'MX1508'); for(const s of [-1,1]) gcyl(g,1.6,1,M({color:0x222222}),s*4-1,top+0.5,-7); }}, world,[-8,46,-30.4],'left');
+{ const cap=(id,x,y,z,ax)=>{ const g=new THREE.Group(); g.position.set(x,y,z); world.add(g); allMods[id]=g;
+    const t=labelTex(26,12,'#1d2550',(c,mm)=>{ c.fillStyle='#9aa7d6'; c.fillRect(0,0,mm(5),mm(12)); c.fillStyle='#fff'; c.font=`700 ${mm(2)}px ${MONO}`; c.fillText('470µF 16V',mm(7),mm(7)); });
+    const o=new THREE.Mesh(new THREE.CylinderGeometry(4,4,12,28),[t,M({color:0x8a8f96,metalness:.6}),M({color:0x222})]); if(ax==='z') o.rotation.x=Math.PI/2; o.castShadow=true; g.add(o); };
+  cap('capMX',-21,55,-26,'y'); cap('capAMP',11,30,26,'y'); }
+
+/* ---------- Vách phải: ampli, loa ---------- */
+mod('amp',{w:18,d:19,t:1.6,color:'#4b2a8a',pads:[...['LRC','BCLK','DIN','GAIN','SD','GND','Vin'].map((n,i)=>[n,7.4,-7.62+i*2.54,{align:'right',off:[-1.45,0],fs:1.1}]),
+   ['SPK+',-7.2,-2.5,{text:''}],['SPK-',-7.2,2.5,{text:''}]],
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.15)}px ${MONO}`; x.textAlign='left'; x.fillText('MAX98357A',...P(-8.4,-7.8)); },
+  extra:(g,top)=>{ chip(g,3.5,3.5,-0.5,0,top,''); gbox(g,5,5.5,8,M({color:0x2f6fdc,roughness:.5}),-6.8,top+2.75,0); for(const s of [-2,2]) gcyl(g,1,0.5,mat.silver,-6.8,top+5.6,s); }}, world,[1,22,30.4],'right');
+{ const g=new THREE.Group(); g.position.set(-17,46,28.4); world.add(g);
+  const t=labelTex(30,20,'#121315',(c,mm)=>{ c.fillStyle='#2a2b2e'; rrectPath(c,mm(1),mm(1),mm(28),mm(18),mm(9)); c.fill(); c.fillStyle='#bbb'; c.font=`700 ${mm(1.6)}px ${MONO}`; c.textAlign='center'; c.fillText('3W  4Ω',mm(15),mm(10.5)); });
+  const o=new THREE.Mesh(new THREE.CylinderGeometry(10,10,5,40),[M({color:0x16171a,roughness:.5}),t,M({color:0x333})]); o.rotation.x=Math.PI/2; o.scale.x=1.5; g.add(o); o.castShadow=true;
+  for(const s of [-5,5]) gbox(g,2,3,1,M({color:0xd9b45a,metalness:.8}),s,0,-3); allMods.spk=g; }
+
+/* ---------- Mặt sau: mạch sạc, công tắc ---------- */
+mod('chg',{w:24,d:17,t:1.6,color:C.blue,pads:['B+','B-','OUT+','OUT-'].map((n,i)=>[n,-7.5+i*5,-6,{off:[0,1.9],align:'center',fs:1.0}]),
+  draw:(x,P,mm)=>{ x.fillStyle='#fff'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('SẠC + BOOST 5V',...P(0,2)); },
+  extra:(g,top)=>{ chip(g,5,5,-3,3.5,top,''); gbox(g,9,3.2,7,mat.silver,6,top+1.6,5.5); gcyl(g,1.6,1.5,M({color:0x333}),-8.5,top+0.75,3); }}, world,[-48.8,33,-6],'back');
+{ const g=new THREE.Group(); g.position.set(-50.5,43,9); world.add(g); gbox(g,5,9,13,M({color:0x1a1a1a,roughness:.5}),0,0,0); gbox(g,3,3,4,mat.silver,-3,0,1.5);
+  for(const s of [-2.54,0,2.54]) gbox(g,1,1,0.6,M({color:0xd9b45a,metalness:.8}),2.8,0,s); allMods.sw=g; }
+const swW=(k)=>{ const g=allMods.sw; return [g.localToWorld(V3(3.3,0,k)), g.localToWorld(V3(6,0,k))]; };
+
+/* ---------- Pin, đế pin ---------- */
+for(const z of [11,-11]){ const g=new THREE.Group(); world.add(g); allMods[z>0?'holderR':'holderL']=g; const gc=new THREE.Group(); world.add(gc); allMods[z>0?'cellR':'cellL']=gc;
+  gbox(g,76,1.6,21,mat.holder,-10,Y0+2.4,z); gbox(g,3,14,21,mat.holder,-46.5,Y0+9,z); gbox(g,3,14,21,mat.holder,26.5,Y0+9,z);
+  const t=labelTex(58,36,'#1f5fb8',(c,mm)=>{ c.fillStyle='#fff'; c.font=`800 ${mm(4.2)}px ${SANS}`; c.fillText('BESTON',mm(6),mm(13)); c.font=`700 ${mm(3.2)}px ${MONO}`; c.fillText('18650  3300mAh  3.7V',mm(6),mm(22)); c.fillStyle='#f2c81e'; c.fillRect(0,mm(28),mm(58),mm(2)); });
+  const o=new THREE.Mesh(new THREE.CylinderGeometry(9.2,9.2,65,40,1,true),t); o.rotation.z=Math.PI/2; o.rotation.x=Math.PI; o.position.set(-10,Y0+12.4,z); o.castShadow=true; gc.add(o);
+  for(const e of [-42.5,22.5]){ const cp=new THREE.Mesh(new THREE.CircleGeometry(9.2,32),mat.silver); cp.position.set(e,Y0+12.4,z); cp.rotation.y=e<0?-Math.PI/2:Math.PI/2; gc.add(cp); }
+  gbox(g,1,4,4,M({color:0xd9b45a,metalness:.8}),-44.6,Y0+16,z); }
+
+/* ---------- Motor N20 ---------- */
+for(const s of [1,-1]){ const g=new THREE.Group(); world.add(g); allMods[s>0?'motR':'motL']=g; gbox(g,12,10,15,mat.motor,22,36.8,s*15); gbox(g,12,10,9,mat.gearbox,22,36.8,s*27);
+  for(const dy of [2.2,-2.2]) gbox(g,1.5,1.4,1.2,M({color:0xd9b45a,metalness:.8}),22,36.8+dy,s*7); }
+const motW=(s,dy)=>[V3(22,36.8+dy,s*6.6), V3(22,36.8+dy,s*3.5)];
+
+
+/* =====================================================================
+   KỊCH BẢN LẮP: dây, mối hàn, chương
+   ===================================================================== */
+scene.updateMatrixWorld(true);
+const MODNAME={tft:'màn TFT',tof:'TOF050C',sht:'SHT31',mx:'MX1508',amp:'MAX98357A',mic:'mic INMP441',irtx:'IR phát',irrx:'IR thu',touch:'nút chạm',chg:'mạch sạc'};
+const CNAME={red:'đỏ',orange:'cam',black:'đen',yellow:'vàng',green:'xanh lá',purple:'tím',blue:'xanh dương',brown:'nâu',white:'trắng',grey:'xám'};
+const pinNice=n=>n==='G'?'GND':n==='RST'?'EN':/^\d/.test(n)?'GPIO'+n:n;
+function P(id,name,opt={}){ const nm=id==='bus'?(BUSALIAS[name]||name):name; const [pos,lead]=padW(id,nm,opt.side??-1,opt.extra||0);
+  const d=allMods[id].userData.def; const idx=d.pads.findIndex(p=>p[0]===nm)+1;
+  const desc= id==='bus' ? `Thanh nguồn · ô ${nm}` : (opt.desc || `${MODNAME[id]} · chân số ${idx} (${nm})`);
+  return {pos,lead,desc,mod:id,label:id==='bus'?nm:nm}; }
+function E(row,name,n=0){ const [pos,lead]=espW(row,name,n); const idx=+espPin(row,name,n).split(':')[2]+1;
+  return {pos,lead,desc:`Đế nóc, mặt dưới · hàng ${row} (${row==='J1'?'bên phải':'bên trái'}) · lỗ số ${idx} = ${pinNice(name)}`,mod:'perf',label:`${row}-${idx} ${pinNice(name)}`}; }
+const X=(pos,lead,desc,label,mod)=>({pos:V3(...pos),lead:V3(...lead),desc,label,mod});
+
+const wireMat={}; const wmat=c=>wireMat[c]||(wireMat[c]=M({color:WC[c], roughness:.5}));
+const solderMat=M({color:0xc9ccd0, metalness:.9, roughness:.25});
+const WIRES=[], JOINTS=[];
+let order=0;
+function W(a,b,color,o={}){ const r=o.r||0.5;
+  const pts=[a.pos,a.lead,...(o.via||[]),b.lead,b.pos]; const curve=new THREE.CatmullRomCurve3(pts,false,'centripetal');
+  const geo=new THREE.TubeGeometry(curve,Math.max(60,pts.length*18),r,8,false); const m=new THREE.Mesh(geo,wmat(color)); m.castShadow=true; world.add(m);
+  const blobs=[a,b].map(e=>{ const s=new THREE.Mesh(new THREE.SphereGeometry(r*1.6,10,8),solderMat); s.position.copy(e.pos); world.add(s); return s; });
+  const len=Math.ceil((curve.getLength()+20)/5)*5;
+  const w={mesh:m,geo,blobs,color,r,len,ia:0,ib:0}; WIRES.push(w);
+  const awg=r>=0.7?'22AWG':'26AWG';
+  w.ia=JOINTS.push({ch:o.chA,ord:o.oa??order++,wire:w,end:0,e:a,
+     l1:`Dây ${CNAME[color]} ${awg} · cắt ${len} mm`, l2:`Hàn đầu 1 vào: ${a.desc}`})-1;
+  w.ib=JOINTS.push({ch:o.chB,ord:o.ob??order++,wire:w,end:1,e:b,
+     l1:`Đầu còn lại của dây ${CNAME[color]} (${len} mm)`, l2:`Hàn vào: ${b.desc}`})-1;
+  return w; }
+function Wb(list,via,axis,gap,o){ const n=list.length; list.forEach((it,i)=>{ const off=(i-(n-1)/2)*gap; W(it[0],it[1],it[2],{...o, r:it[3]||o.r, via:via.map(v=>v.clone().add(V3(axis[0]*off,axis[1]*off,axis[2]*off)))}); }); }
+function EX(ch,pos,l1,l2,label){ JOINTS.push({ch,ord:order++,extra:true,e:{pos:V3(...pos),lead:V3(pos[0],pos[1]+3,pos[2]),label,mod:null},l1,l2}); }
+const RWV2=(x,y,z)=>V3(...roofW(x,y,z));
+
+/* --- Nguồn --- */
+const HT=(z,plus)=>X([-44.4,Y0+(plus?16:13.5),z],[-43,Y0+(plus?19:15),z],`Đế pin ${z>0?'phải':'trái'} · cọc ${plus?'+ (lò xo phẳng)':'− (lò xo)'}, đầu sau`,plus?'+':'−');
+for(const z of [-11,11]){ W(HT(z,true),P('chg','B+',{desc:'Mạch sạc · lỗ số 1 (B+)'}),'red',{r:.7,chA:1,chB:2,via:[V3(-44,30,z*0.6-6)]});
+  W(HT(z,false),P('chg','B-',{desc:'Mạch sạc · lỗ số 2 (B−)'}),'black',{r:.7,chA:1,chB:2,via:[V3(-43.5,27,z*0.6-8)]}); }
+W(HT(-11,true),P('bus','BAT'),'red',{chA:1,chB:4,via:[V3(-40,30,-24)]});
+const SW=(k,d)=>{ const g=allMods.sw; return {pos:g.localToWorld(V3(3.3,0,k)),lead:g.localToWorld(V3(6,0,k)),desc:d,label:k===0?'chân giữa':'chân ngoài',mod:'sw'}; };
+W(P('chg','OUT+',{desc:'Mạch sạc · lỗ số 3 (OUT+ 5V)'}),SW(0,'Công tắc · chân giữa'),'red',{r:.7,chA:2,chB:3,via:[V3(-46,42,4)]});
+W(P('chg','OUT-',{desc:'Mạch sạc · lỗ số 4 (OUT−)'}),P('bus','INGND'),'black',{r:.7,chA:2,chB:4,via:[V3(-44,30,-20)]});
+W(SW(2.54,'Công tắc · chân ngoài (phía trên)'),P('bus','IN5V'),'red',{r:.7,chA:3,chB:4,via:[V3(-46,48,-6),V3(-40,44,-24)]});
+EX(4,[-37,36.5,-29.4],'Dải 5V: kéo thiếc nối liền hàng 1, từ ô A1 đến ô H1','Mặt sau thanh nguồn (mặt quay vào trong thân)','hàng 1');
+EX(4,[-37,27.5,-29.4],'Dải GND: kéo thiếc nối liền hàng 5, từ ô A5 đến ô H5','Mặt sau thanh nguồn','hàng 5');
+EX(4,[-41,32,-29.4],'Điện trở R1 100k (nâu-đen-vàng): chân ô A3 và ô E3','Nằm ngang, hàn 2 chân rồi cắt chân thừa','R1');
+EX(4,[-33.5,30,-29.4],'Điện trở R2 100k: đứng, chân ô F3 và ô F5','Cầu thiếc nối E3 – F3 – G3 thành điểm giữa','R2');
+/* --- Thanh nguồn ra các nhánh (đầu 1 hàn ở chương 4) --- */
+Wb([[P('bus','MX5V'),P('mx','+'),'red',0.7],[P('bus','MXGND'),P('mx','−'),'black',0.7]],[V3(-24,44,-27.5)],[0,1,0],1.6,{chA:4,chB:5});
+Wb([[P('bus','AMP5V'),P('amp','Vin'),'red',0.7],[P('bus','AMPGND'),P('amp','GND'),'black',0.7]],[V3(-41,42,-26),V3(-44,47,0),V3(-30,38,27),V3(-4,20,28.6)],[0,1,0],1.6,{chA:4,chB:6});
+Wb([[P('bus','UP5V'),E('J1','5V'),'red',0.7],[P('bus','UPGND'),E('J1','G'),'black',0.7],[P('bus','MID'),E('J3','1'),'white']],[V3(-36,44,-27),V3(-38,54,-22),V3(-30,62,-12),RWV2(-17,-4,-5)],[0,0,1],1.5,{chA:4,chB:9});
+/* --- Motor --- */
+const MT=(s,dy)=>X([22,36.8+dy,s*6.6],[22,36.8+dy,s*3.5],`Motor ${s>0?'phải':'trái'} · cọc ${dy>0?'trên':'dưới'}`,dy>0?'cọc trên':'cọc dưới');
+Wb([[MT(-1,2.2),P('mx','MA1',{desc:'MX1508 · lỗ MOTOR-A thứ 1'}),'grey'],[MT(-1,-2.2),P('mx','MA2',{desc:'MX1508 · lỗ MOTOR-A thứ 2'}),'grey']],[V3(16,38,-14),V3(6,38,-26)],[0,1,0],1.2,{chA:5,chB:5});
+Wb([[MT(1,2.2),P('mx','MB1',{desc:'MX1508 · lỗ MOTOR-B thứ 1'}),'grey'],[MT(1,-2.2),P('mx','MB2',{desc:'MX1508 · lỗ MOTOR-B thứ 2'}),'grey']],[V3(18,34,3),V3(12,30,-4),V3(6,52,-26)],[0,1,0],1.2,{chA:5,chB:5});
+EX(5,[-21,49,-27],'Tụ 470µF: chân dài (+) chung lỗ + của MX1508, chân ngắn (−) chung lỗ −','Uốn chân tụ cho thân tụ nằm sát vách, hàn chung với dây nguồn','tụ 470µF');
+Wb([[P('mx','IN1'),E('J3','45'),'brown'],[P('mx','IN2'),E('J1','46'),'brown'],[P('mx','IN3'),E('J3','48'),'brown'],[P('mx','IN4'),E('J3','20'),'brown']],[RWV2(2,-5,-3),V3(-2,64,-17),V3(-12,57,-27)].reverse(),[0,-1,0],1.2,{chA:5,chB:9});
+/* --- Ampli, loa --- */
+const SPT=(s)=>X([s>0?-12:-22,46,25.4],[s>0?-12:-22,46,23.5],`Loa · cọc ${s>0?'+ (chấm đỏ)':'−'}`,s>0?'loa +':'loa −');
+W(SPT(1),P('amp','SPK+',{side:1,extra:4,desc:'MAX98357A · cọc vít + (vặn vít, không hàn)'}),'grey',{chA:6,chB:6,via:[V3(-12,40,27),V3(-6,30,33)]});
+W(SPT(-1),P('amp','SPK-',{side:1,extra:4,desc:'MAX98357A · cọc vít − (vặn vít, không hàn)'}),'grey',{chA:6,chB:6,via:[V3(-12,41,28),V3(-6,31,33.5)]});
+EX(6,[11,22,28.8],'Tụ 470µF: chân + chung lỗ Vin, chân − chung lỗ GND của MAX98357A','Hàn cùng lúc với 2 dây nguồn','tụ 470µF');
+Wb([[P('amp','LRC'),E('J3','42'),'blue'],[P('amp','BCLK'),E('J3','2'),'blue'],[P('amp','DIN'),E('J3','40'),'blue']],[RWV2(6,-5,6),V3(5,64,14),V3(7,52,24),V3(8,34,28.6)].reverse(),[1,0,0],1.2,{chA:6,chB:9});
+/* --- Mặt trước --- */
+Wb([[P('sht','VIN'),P('tof','VIN',{extra:2}),'orange'],[P('sht','GND'),P('tof','GND',{extra:2}),'black'],[P('sht','SCL'),P('tof','SCL',{extra:2}),'green'],[P('sht','SDA'),P('tof','SDA',{extra:2}),'yellow']],[V3(48.2,20.5,-14),V3(47.6,21.5,-8)],[0,-1,0],1.0,{chA:7,chB:7});
+Wb([[P('tof','VIN'),E('J1','3V3',1),'orange'],[P('tof','GND'),E('J3','G',1),'black'],[P('tof','SCL'),E('J3','39'),'green'],[P('tof','SDA'),E('J3','38'),'yellow']],[V3(47,24,-6),V3(45.5,42,-13),V3(43,66,-14),RWV2(36,-6,-10),RWV2(16,-4,-4)],[0,0,1],1.2,{chA:7,chB:9});
+Wb([[P('tft','LED'),E('J1','3V3',0),'orange'],[P('tft','SCK'),E('J3','21'),'purple'],[P('tft','SDA'),E('J3','47'),'purple'],[P('tft','A0'),E('J1','14'),'purple'],
+    [P('tft','RESET'),E('J1','RST'),'white'],[P('tft','CS'),E('J1','G'),'black'],[P('tft','GND'),E('J3','G',0),'black'],[P('tft','VCC'),E('J1','3V3',1),'orange']],
+  [V3(44.5,64,25.5),V3(43,69,22),RWV2(36,-6,12),RWV2(20,-4,4)],[0,-1,0],1.25,{chA:7,chB:9});
+/* --- Nóc --- */
+Wb([[P('mic','SCK'),E('J3','2'),'blue'],[P('mic','WS'),E('J3','42'),'blue'],[P('mic','L/R'),E('J1','G'),'black'],[P('mic','SD'),E('J3','41'),'blue'],[P('mic','VDD'),E('J1','3V3',0),'orange'],[P('mic','GND'),E('J3','G',2),'black']],
+  [RWV2(36,-3,24),RWV2(30,-4,17)],[1,0,0],1.15,{chA:8,chB:9});
+Wb([[P('irtx','SIG'),E('J3','19'),'white'],[P('irtx','VCC'),E('J1','5V'),'red'],[P('irtx','GND'),E('J3','G',2),'black']],[RWV2(30,-3,-18)],[1,0,0],1.2,{chA:8,chB:9});
+Wb([[P('irrx','OUT'),E('J3','0'),'white'],[P('irrx','VCC'),E('J1','3V3',1),'orange'],[P('irrx','GND'),E('J1','G'),'black']],[RWV2(-6,-3,-17)],[1,0,0],1.2,{chA:8,chB:9});
+Wb([[P('touch','I/O'),E('J1','3'),'white'],[P('touch','VCC'),E('J1','3V3',0),'orange'],[P('touch','GND'),E('J1','G'),'black']],[RWV2(-6,-3,18)],[1,0,0],1.2,{chA:8,chB:9});
+for(const [x,k] of [[-28,1],[-36,2]]){
+  W(X(roofW(x,2.4,15),roofW(x,-1,15),`Đèn Edison ${k} · đầu phải (+)`,'+ đèn'),{...E('J1','5V'),desc:E('J1','5V').desc+' (qua trở 150 Ω)'},'red',{chA:8,chB:9,via:[RWV2(-20,-3,11)]});
+  W(X(roofW(x,2.4,-15),roofW(x,-1,-15),`Đèn Edison ${k} · đầu trái (−)`,'− đèn'),E('J3','G',1),'black',{chA:8,chB:9,via:[RWV2(-20,-3,-11)]}); }
+EX(9,roofW(13,2.4,0),'Hàn 2 hàng header cái 1×22 vào đế nóc (44 mối)','Cắm header vào chân ESP32 trước, đặt lên PCB rồi mới hàn cho khớp','header');
+EX(9,roofW(-28,2.4,6),'Trở 150 Ω cho đèn Edison: đặt trên đế nóc, nối lỗ 5V với 2 dây đỏ của đèn','Hàn trở trước, dây đèn hàn vào đầu kia của trở','trở 150 Ω');
+EX(10,roofW(16,15.5,0),'Cắm cáp dẹt camera vào đầu cắm trên ESP32, đóng chốt','Mặt tiếp điểm quay đúng chiều hướng dẫn của shop','camera');
+EX(10,[-10,22,0],'Lắp 2 pin 18650: đo 2 pin chênh dưới 0,05 V, lắp đúng cực','Cực + quay ra sau (phía mạch sạc)','2 pin');
+EX(10,[-50.5,43,9],'Bật công tắc, đo thanh nguồn: 5,0 – 5,2 V','Rồi cắm USB vào cổng COM để nạp firmware','bật');
+
+const CH=[
+ {title:'Đế pin',sub:'Hàn dây vào 2 đế pin. Chưa lắp pin.',show:['holderL','holderR'],cam:[[-70,95,-160],[-25,22,0]]},
+ {title:'Mạch sạc',sub:'Gắn mạch sạc lên cửa sau, hàn dây pin vào B+ và B−.',show:['chg'],cam:[[-190,95,-70],[-45,30,-5]]},
+ {title:'Công tắc',sub:'Kẹp công tắc vào thanh đứng cửa sau.',show:['sw'],cam:[[-190,105,40],[-48,40,4]]},
+ {title:'Thanh nguồn',sub:'PCB lỗ 22 × 14 mm (8 cột A–H, 5 hàng 1–5) trên vách trái.',show:['bus'],cam:[[-50,75,-170],[-37,32,-30]]},
+ {title:'Motor và MX1508',sub:'Kẹp 2 motor, dán MX1508 lên vách trái.',show:['motL','motR','mx','capMX'],cam:[[30,95,-190],[5,40,-20]]},
+ {title:'Ampli và loa',sub:'MAX98357A và loa trên vách phải.',show:['amp','spk','capAMP'],cam:[[-10,85,190],[-5,35,25]]},
+ {title:'Mặt trước',sub:'TOF050C, SHT31 và màn TFT. Hàn dây vào module trước khi gắn.',show:['tof','sht','tft'],cam:[[190,85,-50],[45,38,0]]},
+ {title:'Module trên nóc',sub:'Mic, IR phát, IR thu, nút chạm, 2 đèn Edison.',show:['subs','mic','irtx','irrx','touch','edison'],cam:[[90,210,100],[5,75,0]]},
+ {title:'Đế nóc và ESP32',sub:'Mọi dây hàn vào mặt dưới đế nóc, đúng lỗ số trên 2 hàng header.',show:['perf','esp'],cam:[[110,160,-170],[10,70,0]]},
+ {title:'Camera, pin và bật thử',sub:'',show:['cam','fpc','cellL','cellR'],cam:[[190,150,-200],[5,45,0]]},
+];
+JOINTS.forEach((j,i)=>j.k=i);
+JOINTS.sort((a,b)=>a.ch-b.ch || a.ord-b.ord);
+
+/* ---------- dựng dòng thời gian ---------- */
+const TCH=3.2, TJ=2.6, TMOVE=1.0, TINTRO=4, TEND=5;
+const EV=[]; let T=0;
+EV.push({type:'intro',t0:0,dur:TINTRO}); T=TINTRO;
+CH.forEach((c,ci)=>{ c.t0=T; EV.push({type:'chapter',ci,t0:T,dur:TCH}); T+=TCH;
+  JOINTS.filter(j=>j.ch===ci+1).forEach(j=>{ j.t0=T; EV.push({type:'joint',j,ci,t0:T,dur:TJ}); T+=TJ; }); });
+EV.push({type:'end',t0:T,dur:TEND}); T+=TEND;
+const TOTAL=T; const NJ=JOINTS.length;
+JOINTS.forEach((j,i)=>j.n=i+1);
+// thời điểm hàn mỗi đầu dây
+WIRES.forEach(w=>{ w.ta=JOINTS.find(j=>j.wire===w&&j.end===0).t0; w.tb=JOINTS.find(j=>j.wire===w&&j.end===1).t0; });
+
+/* ---------- vòng chỉ chỗ hàn ---------- */
+const ring=new THREE.Mesh(new THREE.TorusGeometry(2.4,0.35,10,40),new THREE.MeshBasicMaterial({color:0xff2d78,depthTest:false,transparent:true}));
+ring.renderOrder=999; scene.add(ring); ring.visible=false;
+const ring2=new THREE.Mesh(new THREE.RingGeometry(0,1.1,24),new THREE.MeshBasicMaterial({color:0xff2d78,depthTest:false,transparent:true,opacity:.45,side:THREE.DoubleSide}));
+ring2.renderOrder=999; scene.add(ring2); ring2.visible=false;
+
+/* ---------- module xuất hiện ---------- */
+const SHOWT={}; CH.forEach(c=>c.show.forEach(id=>SHOWT[id]=c.t0));
+const BASEPOS={}; for(const id of Object.keys(SHOWT)) BASEPOS[id]=allMods[id].position.clone();
+
+/* ---------- camera ---------- */
+const cam=new THREE.PerspectiveCamera(30,16/9,1,4000);
+function jointCam(j){ const e=j.e, p=e.pos.clone(); let n=e.lead.clone().sub(e.pos); if(n.lengthSq()<1e-6) n.set(0,1,0); n.normalize();
+  let dir;
+  if(e.mod==='perf'){ dir=V3(0.45,-0.42,Math.sign(p.z)||1).normalize(); }
+  else { dir=n.clone().add(V3(0.15,0.55,0)); if(Math.abs(dir.x)<0.2&&Math.abs(dir.z)<0.2) dir.add(V3(0.5,0,0.3)); dir.normalize(); }
+  return [p.clone().add(dir.multiplyScalar(e.mod==='perf'?150:140)), p]; }
+const ease=k=>k<0?0:k>1?1:k*k*(3-2*k);
+const camAt=t=>{ // trả về [pos,target]
+  let cur=null, prev=null; for(const ev of EV){ if(ev.t0<=t) { prev=cur; cur=ev; } else break; }
+  const target=ev=>{ if(ev.type==='intro'||ev.type==='end'){ const a=(ev.type==='intro'?0.6:2.2)+((t-ev.t0)/ev.dur)*1.2; return [V3(Math.cos(a)*300,170,Math.sin(a)*300), V3(0,42,0)]; }
+    if(ev.type==='chapter'){ const c=CH[ev.ci].cam; return [V3(...c[0]),V3(...c[1])]; }
+    return jointCam(ev.j); };
+  const b=target(cur); if(!prev || cur.type==='intro') return b;
+  const a=target({...prev, t0:prev.t0}); const k=ease((t-cur.t0)/TMOVE); if(k>=1) return b;
+  // giữ điểm đầu tại thời điểm cuối của sự kiện trước
+  const ap = prev.type==='intro' ? (()=>{ const aa=0.6+1.2; return [V3(Math.cos(aa)*300,170,Math.sin(aa)*300),V3(0,42,0)]; })() : a;
+  return [ap[0].clone().lerp(b[0],k), ap[1].clone().lerp(b[1],k)]; };
+
+/* ---------- che khuất: làm mờ vật chắn ---------- */
+const ghostMat=new THREE.MeshBasicMaterial({color:0x9aa6b1,transparent:true,opacity:0.12,depthWrite:false});
+const ray=new THREE.Raycaster(); let ghosted=[];
+const wireSet=new Set(); WIRES.forEach(w=>{ wireSet.add(w.mesh); w.blobs.forEach(b=>wireSet.add(b)); });
+function unghost(){ ghosted.forEach(([o,m])=>o.material=m); ghosted=[]; }
+function ghostBetween(from,to,keepMod){ const dir=to.clone().sub(from); const dist=dir.length(); ray.set(from,dir.normalize()); ray.far=dist-3;
+  const keep=keepMod?allMods[keepMod]:null;
+  const hits=ray.intersectObjects([world],true);
+  for(const h of hits){ const o=h.object; if(!o.isMesh||!o.visible||wireSet.has(o)||o===ring||o.material===ghostMat) continue; let p=o, mine=false; while(p){ if(p===keep){mine=true;break;} p=p.parent; } if(mine) continue;
+    if(o.material===frameMat) continue; ghosted.push([o,o.material]); o.material=ghostMat; } }
+
+/* ---------- trạng thái tại thời điểm t ---------- */
+const capEl={ch:document.getElementById('cChap'),n:document.getElementById('cNum'),l1:document.getElementById('cL1'),l2:document.getElementById('cL2'),tag:document.getElementById('jtag'),title:document.getElementById('bigTitle'),bar:document.getElementById('pbar')};
+let anyVisible=(t,id)=>t>=SHOWT[id];
+function setState(t,live=false){
+  // module
+  for(const id of Object.keys(SHOWT)){ const g=allMods[id]; const k=(t-SHOWT[id])/0.9; g.visible=k>=0; if(k>=0){ const d=(1-ease(k))*30; g.position.copy(BASEPOS[id]); g.position.y+=d; } }
+  // dây
+  for(const w of WIRES){ const idx=w.geo.index.count; let f=0;
+    if(t>=w.tb) f=0.12+0.88*ease((t-w.tb)/TMOVE); else if(t>=w.ta) f=0.12*ease((t-w.ta)/0.8);
+    if(w.tb<w.ta) f = t>=w.ta?1:0;
+    w.mesh.visible=f>0; w.geo.setDrawRange(0, Math.floor(f*idx/6)*6);
+    w.blobs[0].visible=t>=w.ta+0.9; w.blobs[1].visible=t>=w.tb+0.9; }
+  // sự kiện hiện tại
+  let cur=EV[0]; for(const ev of EV){ if(ev.t0<=t) cur=ev; else break; }
+  const [cp,ct]=camAt(t); cam.position.copy(cp); cam.lookAt(ct); cam.updateMatrixWorld();
+  unghost(); ring.visible=ring2.visible=false; capEl.tag.hidden=true;
+  const ci = cur.ci!==undefined ? cur.ci : (cur.type==='end'?CH.length-1:-1);
+  capEl.ch.textContent = ci>=0 ? `Chương ${ci+1}/${CH.length} · ${CH[ci].title}` : 'QBK-Robo · Video lắp ráp';
+  capEl.bar.style.width=(t/TOTAL*100).toFixed(2)+'%';
+  capEl.title.hidden=true;
+  if(cur.type==='intro'){ capEl.title.hidden=false; capEl.title.innerHTML=`<b>QBK-Robo</b><span>Lắp ráp và hàn từng mối · ${NJ} mối hàn, ${CH.length} chương</span>`; capEl.n.textContent=''; capEl.l1.textContent='Khung đồng đã hàn xong (phần A trong sổ tay).'; capEl.l2.textContent='Dây hàn vào mặt dưới lỗ chân. Chân GPIO là bản tạm, chờ sơ đồ board của shop.'; }
+  else if(cur.type==='chapter'){ const c=CH[cur.ci]; capEl.title.hidden=false; capEl.title.innerHTML=`<b>Chương ${cur.ci+1} · ${c.title}</b><span>${c.sub}</span>`; capEl.n.textContent=''; capEl.l1.textContent=c.sub; capEl.l2.textContent=''; }
+  else if(cur.type==='joint'){ const j=cur.j; capEl.n.textContent=`MỐI ${j.n} / ${NJ}`; capEl.l1.textContent=j.l1; capEl.l2.textContent=j.l2;
+    if(t-cur.t0>TMOVE*0.6){ ring.visible=ring2.visible=true; ring.position.copy(j.e.pos); ring2.position.copy(j.e.pos); ring.lookAt(cam.position); ring2.lookAt(cam.position);
+      const s=live?1+0.18*Math.sin(t*7):1.1; ring.scale.setScalar(s);
+      const v=j.e.pos.clone().project(cam); const W2=innerWidth, H2=innerHeight; capEl.tag.hidden=false; capEl.tag.textContent=j.e.label; capEl.tag.style.left=((v.x+1)/2*W2)+'px'; capEl.tag.style.top=((1-v.y)/2*H2)+'px'; }
+    ghostBetween(cam.position, j.e.pos, j.e.mod); }
+  else if(cur.type==='end'){ capEl.title.hidden=false; capEl.title.innerHTML=`<b>Xong phần hàn</b><span>Tiếp theo: lắp bánh xích, nạp firmware</span>`; capEl.n.textContent=''; capEl.l1.textContent=`Tổng cộng ${NJ} mối hàn.`; capEl.l2.textContent='Soát lại: không mối trần nào chạm khung đồng, mọi mối bọc co nhiệt.'; }
+  return cur; }
+function frameKey(t){ let cur=EV[0]; for(const ev of EV){ if(ev.t0<=t) cur=ev; else break; } const lt=t-cur.t0;
+  if((cur.type==='joint'||cur.type==='chapter') && lt>1.25) return cur.type+cur.t0; return null; }
+
+/* =====================================================================
+   SÂN KHẤU + TRÌNH PHÁT
+   ===================================================================== */
+const REC=location.hash==='#rec'; if(REC) document.body.classList.add('rec');
+stageEl.appendChild(renderer.domElement);
+const frameIds=['side','crossBottom','crossFR','crossTop','rails','midRails','tray','posts','bezels','rearPosts','eyes'];
+const frameMat=mat.brass.clone(); frameMat.transparent=true; frameMat.opacity=0.35; frameMat.depthWrite=false;
+for(const id of frameIds) parts[id].traverse(o=>{ if(o.isMesh){ o.material=frameMat; o.castShadow=false; } });
+for(const id of ['track','road','idler','drive']) parts[id].visible=false;
+scene.background=new THREE.Color(0xe6eaed);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(1600,1600),new THREE.MeshStandardMaterial({color:0xd0d7dc,roughness:.95}));
+ground.rotation.x=-Math.PI/2; ground.position.y=-0.6; ground.receiveShadow=true; scene.add(ground);
+scene.add(new THREE.HemisphereLight(0xffffff,0x40382f,0.8));
+const sun=new THREE.DirectionalLight(0xffffff,1.6); sun.position.set(140,260,170); sun.castShadow=!REC; sun.shadow.mapSize.set(1024,1024);
+Object.assign(sun.shadow.camera,{left:-150,right:150,top:150,bottom:-150,near:10,far:700}); scene.add(sun);
+const f1=new THREE.DirectionalLight(0xc8d6ff,0.8); f1.position.set(-160,120,-140); scene.add(f1);
+const f2=new THREE.DirectionalLight(0xffffff,0.6); f2.position.set(-100,140,200); scene.add(f2);
+const f3=new THREE.DirectionalLight(0xffffff,0.4); f3.position.set(60,-80,0); scene.add(f3);
+if(REC) renderer.shadowMap.enabled=false;
+function resize(){ renderer.setPixelRatio(REC?1:Math.min(devicePixelRatio||1,2)); renderer.setSize(innerWidth,innerHeight,false); cam.aspect=innerWidth/innerHeight; cam.fov=Math.max(30,Math.min(50,30*1.6/Math.min(cam.aspect,1.6))); cam.updateProjectionMatrix(); }
+addEventListener('resize',resize); resize();
+document.getElementById('loading').remove();
+
+let t=0, playing=false, speed=1, last=performance.now();
+const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+const $=id=>document.getElementById(id);
+function draw(){ setState(t,!REC); renderer.render(scene,cam); $('scrub').value=Math.round(t/TOTAL*1000); $('tm').textContent=`${fmt(t)} / ${fmt(TOTAL)}`; }
+function loop(now){ requestAnimationFrame(loop); const dt=Math.min(0.1,(now-last)/1000); last=now; if(playing){ t=Math.min(TOTAL,t+dt*speed); if(t>=TOTAL) setPlay(false); } if(!REC) draw(); }
+function setPlay(v){ playing=v; $('bPlay').textContent=v?'⏸ Dừng':'▶ Phát'; }
+$('bPlay').onclick=()=>{ if(t>=TOTAL) t=0; setPlay(!playing); };
+const jt=()=>EV.filter(e=>e.type==='joint'||e.type==='chapter').map(e=>e.t0);
+$('bNext').onclick=()=>{ const n=jt().find(x=>x>t+0.05); if(n!==undefined) t=n; setPlay(false); };
+$('bPrev').onclick=()=>{ const a=jt().filter(x=>x<t-0.3); if(a.length) t=a[a.length-1]; setPlay(false); };
+$('bSpeed').onclick=e=>{ speed = speed===1?0.5:speed===0.5?2:1; e.currentTarget.textContent=speed+'×'; };
+$('scrub').oninput=e=>{ t=e.target.value/1000*TOTAL; };
+addEventListener('keydown',e=>{ if(e.key===' '){ e.preventDefault(); $('bPlay').click(); } if(e.key==='ArrowRight') $('bNext').click(); if(e.key==='ArrowLeft') $('bPrev').click(); });
+requestAnimationFrame(loop);
+window.__TOTAL=TOTAL; window.__NJ=NJ;
+window.__render=(tt)=>{ t=tt; setState(t,false); renderer.render(scene,cam); };
+window.__key=frameKey;
+window.__done=true;
+</script>
