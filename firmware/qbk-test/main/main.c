@@ -63,7 +63,7 @@ static void display_init(void) {
     ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &bus, SPI_DMA_CH_AUTO));
     esp_lcd_panel_io_handle_t io;
     esp_lcd_panel_io_spi_config_t io_cfg = {.cs_gpio_num = -1, .dc_gpio_num = PIN_LCD_DC, .spi_mode = 0,
-                                            .pclk_hz = 27000000, .trans_queue_depth = 10, .lcd_cmd_bits = 8, .lcd_param_bits = 8};
+                                            .pclk_hz = 15000000, .trans_queue_depth = 10, .lcd_cmd_bits = 8, .lcd_param_bits = 8};
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI3_HOST, &io_cfg, &io));
     esp_lcd_panel_handle_t panel;
     esp_lcd_panel_dev_config_t pcfg = {.reset_gpio_num = -1, .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB, .bits_per_pixel = 16};

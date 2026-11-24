@@ -18,7 +18,7 @@
 
 // ---------- Nút ----------
 // GPIO0 (BOOT) dùng cho mắt thu IR nên không gắn nút vào đó.
-// Nút chạm TTP223 làm nút chính: chạm = nói / dừng, giữ lâu khi khởi động = cài WiFi.
+// Nút chạm TTP223 làm nút chính: chạm = nói / dừng / tắt nhạc, giữ 5 giây = cài WiFi.
 #define TOUCH_BUTTON_GPIO       GPIO_NUM_3
 
 // ---------- Camera OV3660 (chân cố định của board) ----------
@@ -58,7 +58,7 @@
 #define DISPLAY_OFFSET_X 1
 #define DISPLAY_OFFSET_Y 2
 #define DISPLAY_SPI_MODE 0
-#define DISPLAY_SPI_HZ   (27 * 1000 * 1000)
+#define DISPLAY_SPI_HZ   (15 * 1000 * 1000)   // đúng mức ghi tối đa của ST7735S theo datasheet, chắc chắn với dây dài ~15 cm
 
 // ---------- I2C: TOF050C (0x29) + SHT31 (0x44), cổng I2C 0 (camera dùng cổng 1) ----------
 #define SENSOR_I2C_SDA GPIO_NUM_38
