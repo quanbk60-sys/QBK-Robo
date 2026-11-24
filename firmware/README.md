@@ -43,7 +43,7 @@ Lần đầu bật:
 1. Màn hiện hướng dẫn kết nối WiFi. Điện thoại vào mạng WiFi tên **Xiaozhi-xxxx** do robot phát, trang cài đặt tự mở (hoặc vào 192.168.4.1), chọn WiFi nhà (2.4 GHz), nhập mật khẩu.
 2. Robot đọc **mã 6 số**. Vào https://xiaozhi.me, đăng nhập, thêm thiết bị bằng mã đó. Ở đây chọn ngôn ngữ tiếng Việt, giọng nói, tính cách, tên gọi robot.
 3. Nói **"Hi ESP"** hoặc **chạm vào đầu robot** để bắt đầu nói chuyện. Chạm lần nữa để dừng.
-4. Giữ nút chạm 3 giây: vào lại chế độ cài WiFi.
+4. Giữ nút chạm 5 giây: vào lại chế độ cài WiFi.
 
 Có thể nói với robot:
 
@@ -52,7 +52,7 @@ Có thể nói với robot:
 | "Đi tới 2 giây", "lùi lại", "quay trái", "dừng lại" | Chạy bánh xích. Đang tiến gặp vật cản dưới 8 cm thì tự dừng |
 | "Phía trước có gì gần không?" | Đo khoảng cách bằng TOF050C |
 | "Phòng đang bao nhiêu độ?" | Đọc SHT31 |
-| "Học lệnh bật máy lạnh" rồi bấm remote vào nóc robot | Học lệnh IR, lưu với tên (bật, tắt, 26 độ…) |
+| "Học lệnh bật máy lạnh" rồi bấm remote vào nóc robot trong 12 giây | Học lệnh IR, lưu với tên (bật, tắt, 26 độ…). Học xong robot kêu "ting" và hiện chữ trên màn |
 | "Bật máy lạnh", "chỉnh 26 độ", "tắt máy lạnh" | Phát lệnh đã học |
 | "Nhảy đi", "nhảy kiểu robot", "vừa hát vừa nhảy" | 5 điệu nhảy bánh xích, đổi biểu cảm theo nhịp |
 | "Mở nhạc", "hát mừng sinh nhật", "biểu diễn đi" | Phát 1 trong 5 bài nhạc có sẵn và nhảy theo |
@@ -96,6 +96,7 @@ python scripts/build.py qbk-robo --language vi-VN
 ## Đã kiểm tra
 
 - Biên dịch cả 2 firmware không lỗi, không cảnh báo trong code của board.
+- Chạy thử trên máy tính các hàm: CRC của SHT31 (khớp ví dụ trong datasheet), đảo mức tín hiệu IR, bỏ dấu tên lệnh ("bật" → bat, "26 độ" → 26_do).
 - Chạy trên giả lập QEMU ESP32-S3: khởi động, PSRAM, giữ motor đứng yên lúc khởi động đều qua. Giả lập không có ADC và SPI màn hình nên không thử được phần ngoại vi.
 - Chưa chạy trên board thật.
 

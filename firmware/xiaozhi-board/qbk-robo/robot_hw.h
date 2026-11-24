@@ -14,7 +14,10 @@
 #include <nvs.h>
 #include <string>
 #include <vector>
+#include <functional>
 #include <cmath>
+#include <esp_heap_caps.h>
+#include <atomic>
 
 #include "config.h"
 
@@ -210,11 +213,21 @@ public:
         rmt_copy_encoder_config_t ec = {};
         rmt_new_copy_encoder(&ec, &enc_);
         rmt_enable(tx_);
-        buf_.resize(1024);
+        buf_ = (rmt_symbol_word_t*)heap_caps_aligned_calloc(64, kBufSymbols, sizeof(rmt_symbol_word_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+        if (!buf_) return false;
         ok_ = true;
         return true;
     }
     bool ok() const { return ok_; }
+    bool learning() const { return learning_.load(); }
+
+    // Học ở tác vụ nền (không chặn luồng chính). done(name, so_xung) được gọi khi xong, so_xung = 0 nếu không bắt được.
+    bool LearnAsync(const std::string& name, int timeout_ms, std::function<void(const std::string&, int)> done) {
+        if (!ok_ || learning_.exchange(true)) return false;
+        auto* job = new LearnJob{this, name, timeout_ms, std::move(done)};
+        if (xTaskCreate(LearnTask, "qbk_irlearn", 6144, job, 4, nullptr) != pdPASS) { delete job; learning_ = false; return false; }
+        return true;
+    }
 
     // Chờ tối đa timeout_ms để bắt tín hiệu remote. Trả về số xung đã lưu, 0 nếu không bắt được.
     int Learn(const std::string& name, int timeout_ms) {
@@ -227,7 +240,7 @@ public:
             rc.signal_range_min_ns = 1250;
             rc.signal_range_max_ns = 30 * 1000 * 1000;  // im lặng > 30 ms = hết khung
             xQueueReset(rx_queue_);
-            if (rmt_receive(rx_, buf_.data(), buf_.size() * sizeof(rmt_symbol_word_t), &rc) != ESP_OK) break;
+            if (rmt_receive(rx_, buf_, kBufSymbols * sizeof(rmt_symbol_word_t), &rc) != ESP_OK) break;
             TickType_t wait = got_any ? pdMS_TO_TICKS(250) : (deadline > xTaskGetTickCount() ? deadline - xTaskGetTickCount() : 0);
             rmt_rx_done_event_data_t ev;
             if (xQueueReceive(rx_queue_, &ev, wait) != pdTRUE) {
@@ -295,10 +308,21 @@ public:
 
 private:
     bool ok_ = false;
+    std::atomic<bool> learning_{false};
+    struct LearnJob { IrAircon* self; std::string name; int timeout_ms; std::function<void(const std::string&, int)> done; };
+    static void LearnTask(void* arg) {
+        auto* job = static_cast<LearnJob*>(arg);
+        int n = job->self->Learn(job->name, job->timeout_ms);
+        job->self->learning_ = false;
+        if (job->done) job->done(job->name, n);
+        delete job;
+        vTaskDelete(nullptr);
+    }
     rmt_channel_handle_t rx_ = nullptr, tx_ = nullptr;
     rmt_encoder_handle_t enc_ = nullptr;
     QueueHandle_t rx_queue_ = nullptr;
-    std::vector<rmt_symbol_word_t> buf_;
+    static constexpr size_t kBufSymbols = 1024;
+    rmt_symbol_word_t* buf_ = nullptr;
 
     static bool OnRecv(rmt_channel_handle_t, const rmt_rx_done_event_data_t* ed, void* ctx) {
         BaseType_t w = pdFALSE;
@@ -308,9 +332,37 @@ private:
     // Symbol đặc biệt đánh dấu khoảng nghỉ giữa 2 khung: duration0 = 0x7FFF, level0 = 0, duration1 = 0
     static uint32_t GapSymbol(int) { rmt_symbol_word_t s = {}; s.duration0 = 0x7FFF; s.level0 = 0; s.duration1 = 0; s.level1 = 0; return s.val; }
     static bool IsGap(uint32_t v) { rmt_symbol_word_t s; s.val = v; return s.duration0 == 0x7FFF && s.duration1 == 0 && s.level0 == 0; }
+    // Bỏ dấu tiếng Việt: "bật" -> "bat", "tắt" -> "tat", "độ" -> "do"
+    static char Unaccent(uint32_t cp) {
+        static const char* groups[] = {
+            "aàáạảãâầấậẩẫăằắặẳẵAÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ", "eèéẹẻẽêềếệểễEÈÉẸẺẼÊỀẾỆỂỄ", "iìíịỉĩIÌÍỊỈĨ",
+            "oòóọỏõôồốộổỗơờớợởỡOÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ", "uùúụủũưừứựửữUÙÚỤỦŨƯỪỨỰỬỮ", "yỳýỵỷỹYỲÝỴỶỸ", "dđDĐ"};
+        for (auto g : groups) {
+            const unsigned char* p = (const unsigned char*)g;
+            char base = (char)tolower(g[0]);
+            while (*p) {
+                uint32_t c; int n = Utf8(p, c);
+                if (c == cp) return base;
+                p += n;
+            }
+        }
+        return 0;
+    }
+    static int Utf8(const unsigned char* p, uint32_t& cp) {
+        if (p[0] < 0x80) { cp = p[0]; return 1; }
+        if ((p[0] & 0xE0) == 0xC0 && p[1]) { cp = ((p[0] & 0x1F) << 6) | (p[1] & 0x3F); return 2; }
+        if ((p[0] & 0xF0) == 0xE0 && p[1] && p[2]) { cp = ((p[0] & 0x0F) << 12) | ((p[1] & 0x3F) << 6) | (p[2] & 0x3F); return 3; }
+        cp = 0xFFFD; return 1;
+    }
     static std::string Key(const std::string& name) {
         std::string k;
-        for (char c : name) { if (isalnum((unsigned char)c)) k += (char)tolower(c); else if (c == ' ' || c == '_' || c == '-') k += '_'; }
+        const unsigned char* p = (const unsigned char*)name.c_str();
+        while (*p) {
+            uint32_t cp; int n = Utf8(p, cp); p += n;
+            char c = cp < 0x80 ? (char)cp : Unaccent(cp);
+            if (c && isalnum((unsigned char)c)) k += (char)tolower(c);
+            else if (c == ' ' || c == '_' || c == '-') k += '_';
+        }
         if (k.empty()) k = "lenh";
         if (k.size() > 15) k.resize(15);
         return k;

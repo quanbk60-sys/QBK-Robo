@@ -111,10 +111,11 @@ private:
         const DanceStyle* style = self->req_style_;
 
         if (song) {
-            // Đợi AI nói xong (tối đa 15 s), rồi tạm dừng nghe để micro không thu tiếng nhạc.
+            // Đợi AI bắt đầu nói (tối đa 8 s) rồi nói xong (tối đa 20 s), sau đó tạm dừng nghe để micro không thu tiếng nhạc.
             int64_t t0 = esp_timer_get_time();
-            vTaskDelay(pdMS_TO_TICKS(600));
-            while (!self->cancel_ && app.GetDeviceState() == kDeviceStateSpeaking && esp_timer_get_time() - t0 < 15000000) vTaskDelay(pdMS_TO_TICKS(100));
+            while (!self->cancel_ && app.GetDeviceState() != kDeviceStateSpeaking && esp_timer_get_time() - t0 < 8000000) vTaskDelay(pdMS_TO_TICKS(100));
+            t0 = esp_timer_get_time();
+            while (!self->cancel_ && app.GetDeviceState() == kDeviceStateSpeaking && esp_timer_get_time() - t0 < 20000000) vTaskDelay(pdMS_TO_TICKS(100));
             if (!self->cancel_ && app.GetDeviceState() == kDeviceStateListening) {
                 app.StopListening();                 // báo máy chủ dừng nghe rồi về chế độ nghỉ
                 vTaskDelay(pdMS_TO_TICKS(400));

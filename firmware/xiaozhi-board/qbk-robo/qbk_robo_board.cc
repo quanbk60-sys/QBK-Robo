@@ -10,6 +10,7 @@
 #include "adc_battery_monitor.h"
 #include "robot_hw.h"
 #include "fun.h"
+#include "assets/lang_config.h"
 
 #include <esp_log.h>
 #include <esp_lcd_panel_vendor.h>
@@ -115,7 +116,7 @@ private:
             }
             app.ToggleChatState();
         });
-        // Giữ nút chạm 3 giây: vào chế độ cài WiFi
+        // Giữ nút chạm 5 giây: vào chế độ cài WiFi
         touch_button_.OnLongPress([this]() { EnterWifiConfigMode(); });
     }
 
@@ -258,14 +259,23 @@ private:
             });
 
         mcp.AddTool("self.aircon.learn",
-            "Học một lệnh từ remote điều hòa (máy lạnh). Gọi tool này, rồi nhắc người dùng chĩa remote vào robot và bấm nút trong vòng 10 giây. "
+            "Học một lệnh từ remote điều hòa (máy lạnh). Gọi tool này rồi nhắc người dùng chĩa remote vào nóc robot và bấm nút trong vòng 12 giây; robot báo trên màn khi xong. "
             "name: tên lệnh ngắn, không dấu, ví dụ: bat, tat, 26do, 24do, quatmanh.",
             PropertyList({Property("name", kPropertyTypeString)}),
             [this](const PropertyList& p) -> ToolResult {
                 std::string name = p["name"].value<std::string>();
-                int n = ir_.Learn(name, 10000);
-                if (n == 0) return std::unexpected(std::string("Không bắt được tín hiệu remote. Chĩa remote vào mắt thu IR trên nóc robot, cách 5-20 cm, rồi thử lại."));
-                return std::string("{\"learned\":\"") + name + "\",\"pulses\":" + std::to_string(n) + "}";
+                bool started = ir_.LearnAsync(name, 12000, [](const std::string& nm, int n) {
+                    auto& app = Application::GetInstance();
+                    std::string msg = n > 0 ? "Đã học lệnh: " + nm : "Chưa bắt được remote, thử lại nhé";
+                    app.Schedule([msg, n]() {
+                        auto* d = Board::GetInstance().GetDisplay();
+                        if (d) { d->SetEmotion(n > 0 ? "happy" : "confused"); d->SetChatMessage("system", msg.c_str()); }
+                    });
+                    if (n > 0) app.PlaySound(Lang::Sounds::OGG_SUCCESS);
+                });
+                if (!started) return std::unexpected(std::string("Robot đang học một lệnh khác, đợi vài giây rồi thử lại"));
+                return std::string("{\"status\":\"dang_cho_remote_12_giay\",\"name\":\"") + name +
+                       "\",\"note\":\"Nhắc người dùng chĩa remote vào nóc robot (cách 5-20 cm) và bấm nút ngay. Robot sẽ kêu ting và hiện chữ trên màn khi học xong.\"}";
             });
 
         mcp.AddTool("self.aircon.send",
@@ -291,7 +301,7 @@ private:
     }
 
 public:
-    QbkRoboBoard() : touch_button_(TOUCH_BUTTON_GPIO, true /* TTP223: mức cao khi chạm */, 3000) {
+    QbkRoboBoard() : touch_button_(TOUCH_BUTTON_GPIO, true /* TTP223: mức cao khi chạm */, 5000) {
         motors_.Init();          // đầu tiên: giữ motor đứng yên
         InitializeSpi();
         InitializeLcdDisplay();
