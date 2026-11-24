@@ -69,6 +69,7 @@ static void display_init(void) {
     esp_lcd_panel_dev_config_t pcfg = {.reset_gpio_num = -1, .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB, .bits_per_pixel = 16};
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io, &pcfg, &panel));
     esp_lcd_panel_reset(panel);
+    vTaskDelay(pdMS_TO_TICKS(120));   // ST7735S cần 120 ms sau reset
     esp_lcd_panel_init(panel);
     esp_lcd_panel_invert_color(panel, false);
     esp_lcd_panel_set_gap(panel, 1, 2);

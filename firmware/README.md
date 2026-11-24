@@ -96,6 +96,7 @@ python scripts/build.py qbk-robo --language vi-VN
 ## Đã kiểm tra
 
 - Biên dịch cả 2 firmware không lỗi, không cảnh báo trong code của board.
+- Lệnh IR lưu ở vùng nhớ riêng `ir_nvs` 128 KB (không làm đầy vùng lưu WiFi). Học được vài chục lệnh.
 - Chạy thử trên máy tính các hàm: CRC của SHT31 (khớp ví dụ trong datasheet), đảo mức tín hiệu IR, bỏ dấu tên lệnh ("bật" → bat, "26 độ" → 26_do).
 - Chạy trên giả lập QEMU ESP32-S3: khởi động, PSRAM, giữ motor đứng yên lúc khởi động đều qua. Giả lập không có ADC và SPI màn hình nên không thử được phần ngoại vi.
 - Chưa chạy trên board thật.

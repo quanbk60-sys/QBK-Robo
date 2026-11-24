@@ -12,6 +12,7 @@
 #include <freertos/queue.h>
 #include <esp_log.h>
 #include <nvs.h>
+#include <nvs_flash.h>
 #include <string>
 #include <vector>
 #include <functional>
@@ -183,6 +184,13 @@ private:
 class IrAircon {
 public:
     bool Init() {
+        // Lệnh IR lưu ở vùng NVS riêng (ir_nvs, 128 KB) để không làm đầy NVS chính chứa WiFi và cài đặt
+        esp_err_t e = nvs_flash_init_partition(kPart);
+        if (e == ESP_ERR_NVS_NO_FREE_PAGES || e == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            nvs_flash_erase_partition(kPart);
+            e = nvs_flash_init_partition(kPart);
+        }
+        if (e != ESP_OK) { ESP_LOGE("QBK", "Khong mo duoc vung ir_nvs: %s", esp_err_to_name(e)); return false; }
         rmt_rx_channel_config_t rx = {};
         rx.gpio_num = IR_RX_GPIO;
         rx.clk_src = RMT_CLK_SRC_DEFAULT;
@@ -231,7 +239,7 @@ public:
         return true;
     }
 
-    // Chờ tối đa timeout_ms để bắt tín hiệu remote. Trả về số xung đã lưu, 0 nếu không bắt được.
+    // Chờ tối đa timeout_ms để bắt tín hiệu remote. Trả về số xung đã lưu, 0 nếu không bắt được, -1 nếu bắt được mà không lưu được.
     int Learn(const std::string& name, int timeout_ms) {
         if (!ok_) return 0;
         std::vector<uint32_t> frames;                  // các symbol thô, khung sau cách khung trước bằng 1 symbol "gap"
@@ -262,7 +270,7 @@ public:
             if (frames.size() > 1800) break;
         }
         if (!got_any) return 0;
-        if (!Save(name, frames)) return 0;
+        if (!Save(name, frames)) return -1;
         return (int)frames.size();
     }
 
@@ -289,7 +297,7 @@ public:
     std::vector<std::string> List() {
         std::vector<std::string> out;
         nvs_iterator_t it = nullptr;
-        esp_err_t e = nvs_entry_find(NVS_DEFAULT_PART_NAME, "ir_codes", NVS_TYPE_BLOB, &it);
+        esp_err_t e = nvs_entry_find(kPart, "ir_codes", NVS_TYPE_BLOB, &it);
         while (e == ESP_OK) {
             nvs_entry_info_t info;
             nvs_entry_info(it, &info);
@@ -302,7 +310,7 @@ public:
 
     bool Erase(const std::string& name) {
         nvs_handle_t h;
-        if (nvs_open("ir_codes", NVS_READWRITE, &h) != ESP_OK) return false;
+        if (nvs_open_from_partition(kPart, "ir_codes", NVS_READWRITE, &h) != ESP_OK) return false;
         bool ok = nvs_erase_key(h, Key(name).c_str()) == ESP_OK;
         nvs_commit(h); nvs_close(h);
         return ok;
@@ -323,6 +331,7 @@ private:
     rmt_channel_handle_t rx_ = nullptr, tx_ = nullptr;
     rmt_encoder_handle_t enc_ = nullptr;
     QueueHandle_t rx_queue_ = nullptr;
+    static constexpr const char* kPart = "ir_nvs";
     static constexpr size_t kBufSymbols = 1024;
     rmt_symbol_word_t* buf_ = nullptr;
 
@@ -371,14 +380,14 @@ private:
     }
     bool Save(const std::string& name, const std::vector<uint32_t>& s) {
         nvs_handle_t h;
-        if (nvs_open("ir_codes", NVS_READWRITE, &h) != ESP_OK) return false;
+        if (nvs_open_from_partition(kPart, "ir_codes", NVS_READWRITE, &h) != ESP_OK) return false;
         bool ok = nvs_set_blob(h, Key(name).c_str(), s.data(), s.size() * sizeof(uint32_t)) == ESP_OK;
         nvs_commit(h); nvs_close(h);
         return ok;
     }
     bool Load(const std::string& name, std::vector<uint32_t>& s) {
         nvs_handle_t h;
-        if (nvs_open("ir_codes", NVS_READONLY, &h) != ESP_OK) return false;
+        if (nvs_open_from_partition(kPart, "ir_codes", NVS_READONLY, &h) != ESP_OK) return false;
         size_t len = 0;
         bool ok = nvs_get_blob(h, Key(name).c_str(), nullptr, &len) == ESP_OK && len > 0;
         if (ok) { s.resize(len / sizeof(uint32_t)); ok = nvs_get_blob(h, Key(name).c_str(), s.data(), &len) == ESP_OK; }

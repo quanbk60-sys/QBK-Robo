@@ -66,6 +66,7 @@ private:
         panel_config.bits_per_pixel = 16;
         ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(panel_io, &panel_config, &panel));   // ST7735S dùng chung lệnh cơ bản
         esp_lcd_panel_reset(panel);
+        vTaskDelay(pdMS_TO_TICKS(120));   // ST7735S cần 120 ms sau reset mới nhận lệnh thức dậy
         esp_lcd_panel_init(panel);
         esp_lcd_panel_invert_color(panel, DISPLAY_INVERT_COLOR);
         esp_lcd_panel_swap_xy(panel, DISPLAY_SWAP_XY);
@@ -268,7 +269,7 @@ private:
                 std::string name = p["name"].value<std::string>();
                 bool started = ir_.LearnAsync(name, 12000, [](const std::string& nm, int n) {
                     auto& app = Application::GetInstance();
-                    std::string msg = n > 0 ? "Đã học lệnh: " + nm : "Chưa bắt được remote, thử lại nhé";
+                    std::string msg = n > 0 ? "Đã học lệnh: " + nm : (n < 0 ? "Bộ nhớ lệnh đầy, xóa bớt lệnh cũ" : "Chưa bắt được remote, thử lại nhé");
                     app.Schedule([msg, n]() {
                         auto* d = Board::GetInstance().GetDisplay();
                         if (d) { d->SetEmotion(n > 0 ? "happy" : "confused"); d->SetChatMessage("system", msg.c_str()); }

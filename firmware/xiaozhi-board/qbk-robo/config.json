@@ -6,7 +6,8 @@
             "name": "qbk-robo",
             "sdkconfig_append": [
                 "CONFIG_ESP_CONSOLE_SECONDARY_NONE=y",
-                "CONFIG_USJ_ENABLE_USB_SERIAL_JTAG=n"
+                "CONFIG_USJ_ENABLE_USB_SERIAL_JTAG=n",
+                "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"main/boards/qbk-robo/partitions.csv\""
             ]
         }
     ]
