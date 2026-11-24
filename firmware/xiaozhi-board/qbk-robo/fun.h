@@ -55,18 +55,23 @@ public:
     // Nhảy không nhạc, chạy nền để AI vừa hát/nói vừa nhảy.
     bool StartDance(const DanceStyle* style, int seconds, int bpm) {
         if (running_.load()) Stop();
+        if (running_.load()) return false;      // tác vụ cũ chưa thoát hẳn
         req_style_ = style; req_song_ = nullptr; req_seconds_ = seconds; req_bpm_ = bpm;
         return Launch();
     }
     // Phát nhạc + nhảy theo nhịp. Đợi AI nói xong câu trả lời rồi mới bắt đầu.
     bool StartSong(const SongInfo* song, const DanceStyle* style) {
         if (running_.load()) Stop();
+        if (running_.load()) return false;
         req_style_ = style; req_song_ = song; req_seconds_ = (int)(song->seconds + 0.5f); req_bpm_ = song->bpm;
         return Launch();
     }
+    // Chỉ báo dừng, không chờ (dùng trong callback nút bấm). Tác vụ nhảy tự dừng motor và nhạc trong ~50 ms.
+    void RequestStop() { cancel_ = true; motors_.Stop(); }
     void Stop() {
         cancel_ = true;
-        for (int i = 0; i < 60 && running_.load(); i++) vTaskDelay(pdMS_TO_TICKS(20));
+        // Đợi tác vụ cũ thoát hẳn (dọn nhạc tối đa ~1 s) để nó không đè lên tác vụ mới
+        for (int i = 0; i < 150 && running_.load(); i++) vTaskDelay(pdMS_TO_TICKS(20));
         motors_.Stop();
     }
 
@@ -152,7 +157,7 @@ private:
         }
         self->motors_.Stop();
         if (song && self->cancel_) {   // dừng nhạc khi bị hủy
-            for (int i = 0; i < 40 && sound_running_.load(); i++) { app.GetAudioService().ResetDecoder(); vTaskDelay(pdMS_TO_TICKS(50)); }
+            for (int i = 0; i < 20 && sound_running_.load(); i++) { app.GetAudioService().ResetDecoder(); vTaskDelay(pdMS_TO_TICKS(50)); }
             app.GetAudioService().ResetDecoder();
         }
         SetFace("happy", "");

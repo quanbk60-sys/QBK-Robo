@@ -109,7 +109,7 @@ private:
 
     void InitializeButtons() {
         touch_button_.OnClick([this]() {
-            if (fun_.busy()) { fun_.Stop(); return; }      // chạm để dừng nhảy / tắt nhạc
+            if (fun_.busy()) { fun_.RequestStop(); return; }   // chạm để dừng nhảy / tắt nhạc (không chờ trong callback)
             auto& app = Application::GetInstance();
             if (app.GetDeviceState() == kDeviceStateStarting) {
                 EnterWifiConfigMode();
