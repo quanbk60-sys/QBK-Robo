@@ -160,15 +160,15 @@ const PINS = [
   ['Nút chạm TTP223','VCC','3V3','orange'],['Nút chạm TTP223','GND','GND','black'],['Nút chạm TTP223','I/O','GPIO3','white'],
   ['TOF050C (VL6180X)','VIN','3V3','orange'],['TOF050C (VL6180X)','GND','GND','black'],
   ['TOF050C (VL6180X)','SDA','GPIO38','yellow'],['TOF050C (VL6180X)','SCL','GPIO39','green'],
-  ['OLED 0.91" 128×32','VCC','3V3','orange'],['OLED 0.91" 128×32','GND','GND','black'],
-  ['OLED 0.91" 128×32','SDA','GPIO38 (chung với TOF)','yellow'],['OLED 0.91" 128×32','SCL','GPIO39 (chung với TOF)','green'],
+  ['SHT31 (mạch tím)','VIN','3V3','orange'],['SHT31 (mạch tím)','GND','GND','black'],
+  ['SHT31 (mạch tím)','SDA','GPIO38 (chung với TOF)','yellow'],['SHT31 (mạch tím)','SCL','GPIO39 (chung với TOF)','green'],
   ['IR thu','VCC','3V3','orange'],['IR thu','GND','GND','black'],['IR thu','OUT','GPIO0','white'],
-  ['IR phát','VCC','5V','red'],['IR phát','GND','GND','black'],['IR phát','SIG / IN','GPIO19','white'],
+  ['IR phát','VCC','5V','red'],['IR phát','GND','GND','black'],['IR phát','SIG / IN','GPIO20','white'],
   ['MX1508','+ / VCC','5V (thêm tụ 470µF)','red'],['MX1508','− / GND','GND','black'],
-  ['MX1508','IN1','GPIO45','brown'],['MX1508','IN2','GPIO46','brown'],['MX1508','IN3','GPIO48','brown'],['MX1508','IN4','GPIO20','brown'],
+  ['MX1508','IN1','GPIO45','brown'],['MX1508','IN2','GPIO46','brown'],['MX1508','IN3','GPIO19','brown'],['MX1508','IN4','GPIO48','brown'],
   ['MX1508','MOTOR-A','Motor trái','grey'],['MX1508','MOTOR-B','Motor phải','grey'],
   ['Đo pin','B+ → 100k → điểm giữa → 100k → GND','Điểm giữa → GPIO1','white'],
-  ['Đèn Edison ×2','Đầu +','5V qua trở 100–150 Ω','red'],['Đèn Edison ×2','Đầu −','GND','black'],
+  ['Đèn Edison ×2','Đầu +','3V3 (đèn 3V) hoặc 5V (đèn 5V), theo chữ ghi trên đèn','orange'],['Đèn Edison ×2','Đầu −','GND','black'],
   ['ESP32-S3 DevKit','5V','5V từ thanh nguồn','red'],['ESP32-S3 DevKit','GND','GND','black'],
 ];
 const pinsOf = (...mods) => PINS.filter(r => mods.includes(r[0]));
@@ -182,7 +182,6 @@ const CUTS = [
   {bar:2, name:'Thanh khay đáy', n:3, L:80, note:'đỡ 2 đế pin'},
   {bar:2, name:'Cột đứng', n:6, L:32.4, note:'4 cột kẹp motor, 2 cột bánh căng'},
   {bar:3, name:'Viền TFT', n:1, L:200, note:'chữ nhật 62×39, bo R3'},
-  {bar:3, name:'Viền OLED', n:1, L:112, note:'chữ nhật 42×15, bo R2,5'},
   {bar:3, name:'Thanh đứng cửa sau', n:2, L:23.4, note:'giữ mạch sạc và công tắc'},
   {bar:3, name:'Mắt trục', n:6, L:20, note:'1 vòng quanh đinh Ø3 + 2 chân'},
   {bar:3, name:'Kẹp module, kẹp đèn', n:1, L:200, note:'cắt dần khi cần'},
@@ -203,15 +202,15 @@ const STEPS = [
  {id:'p0', ph:'P', cam:'iso', title:'Chuẩn bị dụng cụ và đồ mua thêm', all:true,
   goal:'Đủ đồ trước khi bắt đầu thì không phải dừng giữa chừng. Mô hình bên trái là robot hoàn chỉnh, xoay thử để quen các phần.',
   need:['Mỏ hàn chỉnh nhiệt từ 60 W, mũi dẹt 2–3 mm. Thanh đồng hút nhiệt rất nhanh, mỏ hàn yếu sẽ không làm thiếc chảy.','Thiếc 0,8 mm có lõi nhựa thông, thêm nhựa thông hoặc flux lỏng.','Kìm cắt, kìm mỏ nhọn, giũa nhỏ, giấy nhám 400 và 1000.','Thước kẹp, ê-ke, bút lông dầu, băng keo giấy.','Tấm gỗ ép khoảng 20×30 cm làm bàn gá, vài cây đinh nhỏ.','Một đoạn ống nhựa PVC Ø27 làm khuôn uốn góc (bán kính tâm thanh đồng ≈ 14 mm).','Đồng hồ vạn năng, breadboard và dây cắm để thử module.'],
-  do:['Mua thêm: bộ xích, bánh căng và 4 bánh đỡ. Chọn xích khớp răng bánh 64T (đo bánh thật trước khi đặt).','Mua thêm: ốc M3×20 kèm đai ốc ×8 (trục bánh căng, bánh đỡ), vài ốc M2.','Mua thêm: dây silicone 26AWG đủ 10 màu trong tab “Đi dây đẹp”, dây 22AWG đỏ và đen cho đường nguồn.','Mua thêm: header cái 1×22 ×2 (đế cắm ESP32), 1 trở 100k nữa (cần 2 cái), 2 trở 100–150 Ω cho đèn Edison.','Lấy vài sợi đồng mảnh từ lõi dây điện mềm để quấn mối nối và buộc dây.'],
-  check:['Đủ dụng cụ ở mục trên.','Đã đặt mua xích và đồ còn thiếu.'],
-  tip:{t:'Thứ tự cả quá trình',b:'Làm khung trước (phần A). Trong lúc chờ xích, thử từng module trên breadboard (phần B). Module nào chạy rồi mới hàn và lắp vào khung theo thứ tự từ dưới lên, từ trong ra ngoài (phần C).'}},
+  do:['Đồ đã đủ, không cần mua thêm (xem mục 3.3 trong hồ sơ PDF).','Bánh xích: bộ bánh xích N20 trục dài đã đặt (có bánh chủ động, bánh căng, trục, ốc).','Dây: dùng bộ dây Dupont trong combo. Đầu phía module cắt bỏ đầu cắm rồi hàn vào lỗ chân, đầu phía ESP32 giữ đầu cái để cắm thẳng vào chân board.','Linh kiện: trở 100k (cần 2), tụ 470µF (cần 2), PCB lỗ 5×7 (cắt làm đế nóc và thanh nguồn), ống co nhiệt, keo nến.','Lấy vài sợi đồng mảnh từ lõi dây điện mềm để quấn mối nối và buộc dây.'],
+  check:['Đủ dụng cụ ở mục trên.','Đủ đồ theo danh sách 3.1 và 3.2 trong hồ sơ PDF.'],
+  tip:{t:'Thứ tự cả quá trình',b:'Làm khung trước (phần A). Trong lúc chờ xích, nạp firmware thử phần cứng và cắm từng module bằng dây Dupont (phần B). Module nào chạy rồi mới hàn và lắp vào khung theo thứ tự từ dưới lên, từ trong ra ngoài (phần C).'}},
 
  // ---------------- A. KHUNG ----------------
  {id:'a1', ph:'A', cam:'cut', title:'Nắn thẳng và cắt đồng',
   goal:'Cắt 3 thanh 1 m thành 29 đoạn theo bảng. Mô hình bên trái xếp các đoạn theo thứ tự cắt.',
   need:['3 thanh đồng Ø1,6 × 1 m','Kìm cắt, giũa, nhám 1000, bút lông, băng keo giấy'],
-  do:['Nắn thẳng: kẹp một đầu, kéo căng đầu kia, rồi lăn thanh dưới tấm gỗ phẳng vài lượt.','Đánh nhám nhẹ cả thanh bằng nhám 1000. Đồng bị xỉn sẽ rất khó ăn thiếc.','Thanh 1: 2 vòng hông 305 mm, 2 ray nóc 70 mm, 2 thanh giữa hông 98,4 mm (tổng 947 mm).','Thanh 2: 8 thanh ngang 62,4 mm, 3 thanh khay 80 mm, 6 cột 32,4 mm (tổng 934 mm).','Thanh 3: viền TFT 200 mm, viền OLED 112 mm, 2 thanh cửa sau 23,4 mm. Phần còn lại (khoảng 640 mm) giữ nguyên để làm mắt trục và kẹp.','Giũa phẳng hai đầu mỗi đoạn, dán băng keo ghi tên.'],
+  do:['Nắn thẳng: kẹp một đầu, kéo căng đầu kia, rồi lăn thanh dưới tấm gỗ phẳng vài lượt.','Đánh nhám nhẹ cả thanh bằng nhám 1000. Đồng bị xỉn sẽ rất khó ăn thiếc.','Thanh 1: 2 vòng hông 305 mm, 2 ray nóc 70 mm, 2 thanh giữa hông 98,4 mm (tổng 947 mm).','Thanh 2: 8 thanh ngang 62,4 mm, 3 thanh khay 80 mm, 6 cột 32,4 mm (tổng 934 mm).','Thanh 3: viền TFT 200 mm, 2 thanh cửa sau 23,4 mm. Phần còn lại (khoảng 750 mm) giữ nguyên, sau cắt mắt trục (6 × 20) và kẹp (200), còn dư khoảng 430 mm.','Giũa phẳng hai đầu mỗi đoạn, dán băng keo ghi tên.'],
   check:['8 thanh ngang dài bằng nhau: xếp sát nhau, chênh dưới 0,3 mm.','Mỗi đoạn có nhãn tên.'],
   tip:{t:'Mẹo',b:'Cắt thanh ngang dư khoảng 0,5 mm, sau đó giũa dần đến khi lọt khít giữa 2 vòng hông. Cắt thiếu thì phải bỏ.'},
   labels:'cut'},
@@ -248,15 +247,15 @@ const STEPS = [
   check:['Ướm motor N20: hộp số lọt khít giữa 2 cột, mặt trên chạm thanh giữa hông, trục thò ra ngoài khung.','Tâm trục motor cao khoảng 29 mm.'],
   labels:'a6'},
  {id:'a7', ph:'A', cam:'front', title:'Khung viền màn hình và cửa sau',
-  goal:'Viền đồng ôm 2 màn ở mặt trước. Cửa sau giữ mạch sạc, cổng USB-C và công tắc.',
-  need:['Đoạn 200 mm, đoạn 112 mm, 2 đoạn 23,4 mm','Màn TFT và OLED để ướm'],
-  do:['Viền TFT: uốn chữ nhật 62 × 39 mm, bo góc R3 quanh mũi kìm. Mối nối đặt giữa cạnh dưới.','Viền OLED: chữ nhật 42 × 15 mm, bo R2,5.','Hàn viền TFT vào mặt trước: cạnh dưới cao 34 mm (ngang thanh giữa hông), 2 cạnh bên áp vào thanh đứng trước của 2 vòng hông.','Hàn viền OLED: cạnh dưới đặt lên thanh ngang trước dưới, căn giữa.','Cửa sau: 2 thanh 23,4 mm hàn đứng giữa 2 thanh ngang sau, cách tâm 20 mm mỗi bên.'],
-  check:['Ướm màn TFT sau viền: viền ôm vừa mép module, không che vùng hiển thị 36 × 28 mm.','OLED nằm lọt trong viền nhỏ.'],
+  goal:'Viền đồng ôm màn TFT ở mặt trước. Cửa sau giữ mạch sạc, cổng USB-C và công tắc.',
+  need:['Đoạn 200 mm, 2 đoạn 23,4 mm','Màn TFT để ướm'],
+  do:['Đo mạch màn thật trước khi uốn (mạch 1.8" thường 34 × 56 mm). Viền TFT: uốn chữ nhật 62 × 39 mm, bo góc R3 quanh mũi kìm. Mối nối đặt giữa cạnh dưới.','Hàn viền TFT vào mặt trước: cạnh dưới cao 34 mm (ngang thanh giữa hông), 2 cạnh bên áp vào thanh đứng trước của 2 vòng hông.','Cửa sau: 2 thanh 23,4 mm hàn đứng giữa 2 thanh ngang sau, cách tâm 20 mm mỗi bên.'],
+  check:['Ướm màn TFT sau viền: viền ôm vừa mép module, không che vùng hiển thị.'],
   labels:'a7'},
  {id:'a8', ph:'A', cam:'sideL', title:'Mắt trục bánh căng và bánh đỡ',
   goal:'Làm bước này khi đã có xích, để chỉnh vị trí bánh căng cho xích vừa căng.',
-  need:['Phần đồng còn lại, đinh Ø3 làm khuôn','Ốc M3×20 và đai ốc, bộ xích, bánh căng, bánh đỡ'],
-  do:['Uốn 6 mắt tròn: quấn đồng 1 vòng quanh đinh Ø3, chừa 2 chân 6 mm.','Lắp tạm bánh răng 64T lên motor, quàng xích qua bánh căng, ướm vị trí sao cho xích căng vừa.','Hàn mắt bánh căng vào cột bánh căng, ở cao khoảng 15 mm, lỗ quay ra ngoài.','Hàn 4 mắt bánh đỡ lên thanh đáy, cách mặt trước 48 và 66 mm, mỗi bên 2 mắt.'],
+  need:['Phần đồng còn lại, đinh Ø3 làm khuôn','Bộ bánh xích N20 trục dài (bánh chủ động, bánh căng, bánh đỡ, trục, ốc)'],
+  do:['Uốn 6 mắt tròn: quấn đồng 1 vòng quanh đinh Ø3, chừa 2 chân 6 mm. Trục của bộ xích khác Ø3 thì đổi đinh khuôn cho vừa trục.','Lắp tạm bánh chủ động của bộ xích lên motor, quàng xích qua bánh căng, ướm vị trí sao cho xích căng vừa.','Hàn mắt bánh căng vào cột bánh căng, ở cao khoảng 15 mm, lỗ quay ra ngoài.','Hàn 4 mắt bánh đỡ lên thanh đáy, cách mặt trước 48 và 66 mm, mỗi bên 2 mắt.'],
   check:['Ấn vào giữa đoạn xích trên: võng 2–3 mm.','Bánh đỡ chạm nhẹ mặt trong đoạn xích dưới.'],
   labels:'a8'},
  {id:'a9', ph:'A', cam:'iso', title:'Làm sạch và phủ bóng khung', hl:'frame',
@@ -265,48 +264,44 @@ const STEPS = [
   check:['Lắc mạnh khung: không mối nào lỏng, không kêu lạch cạch.','Không còn vệt flux nâu ở các mối.']},
 
  // ---------------- B. THỬ MODULE ----------------
- {id:'b1', ph:'B', cam:'roof', title:'Cắm USB, nạp thử ESP32-S3', focus:['devkit'],
-  goal:'Thử từng module bằng dây cắm trên breadboard, chưa hàn gì. Module nào chạy rồi mới sang module tiếp theo.',
-  need:['ESP32-S3 DevKit, cáp USB-C có truyền dữ liệu','Arduino IDE 2 với gói board esp32 của Espressif'],
-  do:['Cắm cáp vào cổng USB-C ghi COM (cổng UART). Từ bước IR trở đi chân GPIO19/20 được dùng làm tín hiệu, nên luôn nạp code qua cổng này.','Chọn board “ESP32S3 Dev Module”, Flash Size 16MB, PSRAM “OPI PSRAM”.','Nạp chương trình in ra Serial dung lượng PSRAM và flash.'],
-  check:['Serial hiện PSRAM khoảng 8 MB, flash 16 MB.'],
-  tip:{t:'Lưu ý',b:'Chân GPIO trong sổ tay là bản tạm theo board ESP32-S3 N16R8 có camera. Khi có sơ đồ của shop, em sẽ đối chiếu lại toàn bộ bảng chân.',warn:true}},
+ {id:'b1', ph:'B', cam:'roof', title:'Nạp firmware thử phần cứng', focus:['devkit'],
+  goal:'Thử từng module bằng dây Dupont, chưa hàn gì. Firmware qbk-test.bin tự kiểm từng module và báo kết quả lên màn TFT và cổng Serial.',
+  need:['ESP32-S3 DevKit, cáp USB-C có truyền dữ liệu','Máy tính có Chrome hoặc Edge','File firmware/bin/qbk-test.bin trong repo'],
+  do:['Cắm cáp vào cổng USB-C ghi COM. GPIO19, GPIO20 được dùng cho motor và IR phát nên luôn nạp qua cổng COM.','Mở https://espressif.github.io/esptool-js/, bấm Connect, chọn cổng COM. Không kết nối được: giữ BOOT, bấm RST, nhả BOOT rồi thử lại.','Bấm Erase Flash. Xong ghi địa chỉ 0x0, chọn qbk-test.bin, bấm Program. Đợi xong thì bấm RST.','Mở Serial Monitor 115200 (trên trang nạp có sẵn Console).'],
+  check:['Serial hiện dòng “===== QBK-Robo TEST =====” và dòng “I2C scan”.'],
+  tip:{t:'Lưu ý',b:'Chân GPIO trong sổ tay là bản tạm theo board ESP32-S3 N16R8 có camera. Mỗi khi cắm thêm module ở các bước dưới, bấm RST để firmware kiểm lại.',warn:true}},
  {id:'b2', ph:'B', cam:'roof', title:'Camera OV3660', focus:['devkit','camera'],
   goal:'Camera dùng cáp dẹt nối vào đầu cắm trên board.',
-  do:['Lật nắp khóa của đầu cắm cáp dẹt lên. Cắm cáp đúng chiều theo hướng dẫn của shop, đẩy hết vào rồi đóng nắp.','Nạp ví dụ CameraWebServer. Sửa phần chân camera theo sơ đồ board, điền tên và mật khẩu WiFi.','Mở địa chỉ IP in ra Serial bằng điện thoại.'],
-  check:['Thấy hình từ camera trên điện thoại.','Camera ấm nhẹ là bình thường.']},
+  do:['Lật nắp khóa của đầu cắm cáp dẹt lên. Cắm cáp đúng chiều theo hướng dẫn của shop, đẩy hết vào rồi đóng nắp.','Bấm RST.'],
+  check:['Serial hiện “Camera: OK” kèm mã cảm biến.','Báo LỖI: kiểm cáp cắm đủ sâu, đúng chiều. Vẫn lỗi thì chụp màn Serial gửi em đối chiếu chân camera.']},
  {id:'b3', ph:'B', cam:'front', title:'Màn TFT 1.8" (mắt robot)', focus:['devkit','tft'], pins:['TFT 1.8" ST7735'],
   goal:'Màn TFT nối SPI. Chân CS nối luôn xuống GND vì màn là thiết bị SPI duy nhất, tiết kiệm được 1 chân.',
-  do:['Cắm dây theo bảng bên dưới.','Cài thư viện Adafruit ST7735 và Adafruit GFX. Mở ví dụ graphicstest, khai báo SCK = 21, MOSI = 47, DC = 14, CS = −1, RST = −1.','Đặt màn xoay ngang (rotation 1 hoặc 3).'],
-  check:['Màn hiện chữ và màu đúng.','Nếu màu bị lệch hoặc viền rác: thử đổi INITR_BLACKTAB sang INITR_GREENTAB.']},
+  do:['Cắm dây theo bảng bên dưới.','Bấm RST.'],
+  check:['Màn hiện “QBK-Robo TEST” và các dòng trạng thái.','Dải màu dưới cùng là đỏ – xanh lá – xanh dương từ trái sang phải.','Chữ bị lật, ngược, lệch hoặc sai màu: chụp màn gửi em để đổi cấu hình.']},
  {id:'b4', ph:'B', cam:'roof', title:'Mic INMP441', focus:['devkit','mic'], pins:['Mic INMP441'],
-  do:['Cắm dây theo bảng.','Nạp ví dụ đọc I2S 16 kHz, in mức âm thanh ra Serial Plotter.'],
-  check:['Nói gần mic: đường sóng trên Serial Plotter nhảy lên.','Im lặng: đường gần như phẳng.']},
- {id:'b5', ph:'B', cam:'insideR', title:'Ampli MAX98357A và loa', focus:['devkit','amp','speaker'], pins:['Ampli MAX98357A'],
+  do:['Cắm dây theo bảng.','Bấm RST.'],
+  check:['Nói gần mic: thanh “Mic: ||||” trên màn dài ra.','Im lặng: thanh ngắn lại.']},
+ {id:'b5', ph:'B', cam:'frontLow', title:'Nút chạm, TOF050C và SHT31', focus:['devkit','touch','tof','sht'], pins:['Nút chạm TTP223','TOF050C (VL6180X)','SHT31 (mạch tím)'],
+  goal:'TOF050C đo vật cản phía trước, SHT31 đo nhiệt độ và độ ẩm, hai cái dùng chung 2 dây I2C. Nút chạm để vuốt đầu robot.',
+  do:['Cắm dây theo bảng. SDA, SCL của TOF050C và SHT31 cắm chung vào GPIO38, GPIO39.','Bấm RST.'],
+  check:['Serial dòng “I2C scan” có 0x29 và 0x44.','Đưa tay lại gần TOF: số mm thay đổi. Không có vật thì hiện “khong co vat”.','Hà hơi vào SHT31: độ ẩm tăng.','Chạm nút: dòng “Cham” chuyển sang CO.']},
+ {id:'b6', ph:'B', cam:'insideR', title:'Ampli MAX98357A và loa', focus:['devkit','amp','speaker'], pins:['Ampli MAX98357A'],
   goal:'Ampli và mic dùng chung 2 dây xung nhịp I2S (GPIO2, GPIO42), chỉ khác dây dữ liệu.',
-  do:['Cắm dây theo bảng. Hai dây loa vào cọc + và − của ampli.','Nạp ví dụ phát sóng sin 440 Hz.','Thử tiếp: thu từ mic rồi phát lại ra loa.'],
-  check:['Nghe tiếng rõ, không rè.','Nếu rè: giảm âm lượng trong code, kiểm tra GND chung.']},
- {id:'b6', ph:'B', cam:'frontLow', title:'Nút chạm và cảm biến TOF050C', focus:['devkit','touch','tof'], pins:['Nút chạm TTP223','TOF050C (VL6180X)'],
-  goal:'TOF050C đo khoảng cách vật cản phía trước. Nút chạm để vuốt đầu robot.',
-  do:['Cắm dây theo bảng.','Chạy I2C Scanner với SDA = 38, SCL = 39.','Nạp ví dụ Adafruit_VL6180X để đọc khoảng cách. Đọc nút chạm bằng digitalRead(3).'],
-  check:['I2C Scanner thấy địa chỉ 0x29.','Đưa tay lại gần: số khoảng cách thay đổi.','Chạm nút: Serial in ra “Touch”.']},
- {id:'b7', ph:'B', cam:'front', title:'Màn OLED 0.91" (sóng âm)', focus:['devkit','oled','tof'], pins:['OLED 0.91" 128×32'],
-  goal:'OLED dùng chung 2 dây I2C với TOF050C.',
-  do:['Cắm OLED song song với TOF050C trên breadboard.','Chạy lại I2C Scanner.','Nạp ví dụ Adafruit SSD1306 kích thước 128×32.'],
-  check:['Scanner thấy cả 0x3C và 0x29.','OLED hiện chữ, TOF vẫn đọc được khi chạy cùng lúc.']},
- {id:'b8', ph:'B', cam:'roof', title:'IR thu và IR phát (điều hòa)', focus:['devkit','irtx','irrx'], pins:['IR thu','IR phát'],
-  goal:'Học lệnh từ remote máy lạnh bằng IR thu, phát lại bằng IR phát.',
-  do:['Cắm dây theo bảng. IR phát dùng 5V để phát xa hơn.','Cài thư viện IRremoteESP8266. Chạy IRrecvDumpV2, bấm remote máy lạnh vào mắt thu.','Chép mã nhận được vào ví dụ gửi lệnh, phát về phía máy lạnh.'],
-  check:['Serial hiện tên hãng máy lạnh và mã lệnh.','Máy lạnh kêu bíp khi robot phát lệnh, ở khoảng cách 2–3 m.'],
-  tip:{t:'Lưu ý',b:'GPIO19 là chân USB gốc. Từ bước này cổng USB-C “USB” không nạp code được nữa, dùng cổng “COM”. Mắt IR thu nối GPIO0 vì lúc nghỉ nó giữ mức cao, nên board vẫn khởi động bình thường.',warn:true}},
- {id:'b9', ph:'B', cam:'insideL', title:'Motor N20 và mạch MX1508', focus:['devkit','mx','motors'], pins:['MX1508'],
-  do:['Cắm dây theo bảng. Tụ 470µF cắm sát chân + và − của MX1508 (chân dài là +).','Tạm lấy 5V từ chân 5V của DevKit.','Nạp chương trình: tiến 1 giây, lùi 1 giây, quay trái, quay phải. Kê motor lên cho khỏi chạy lung tung.'],
-  check:['Hai motor quay đúng chiều. Motor nào quay ngược thì đảo 2 dây của motor đó.','Nếu board tự khởi động lại khi motor chạy: để sang bước pin rồi thử lại.']},
- {id:'b10', ph:'B', cam:'rear', title:'Nguồn pin, mạch sạc và chạy tất cả', focus:['holders','cells','charger','switch'], pins:['Đo pin','ESP32-S3 DevKit'],
+  do:['Cắm dây theo bảng. Hai dây loa vào cọc + và − của ampli.','Bấm RST: loa kêu 1 tiếng bíp ngắn.','Chạm nút: loa kêu 3 tiếng bíp (sau đó motor và IR thử tiếp, chưa cắm thì bỏ qua).'],
+  check:['Nghe tiếng rõ, không rè.','Rè hoặc không có tiếng: kiểm GND chung, dây DIN, BCLK, LRC.']},
+ {id:'b7', ph:'B', cam:'roof', title:'IR thu và IR phát (điều hòa)', focus:['devkit','irtx','irrx'], pins:['IR thu','IR phát'],
+  goal:'IR thu dùng để học lệnh remote máy lạnh, IR phát để phát lại.',
+  do:['Cắm dây theo bảng. IR phát dùng 5V để phát xa hơn.','Bấm remote máy lạnh vào mắt thu.','Chạm nút để chạy chuỗi thử: sau 3 tiếng bíp và motor, IR phát sáng 1 giây.'],
+  check:['Số “IR thu” trên màn tăng mỗi lần bấm remote.','Soi mắt IR phát bằng camera điện thoại: thấy đèn nháy tím trong 1 giây.'],
+  tip:{t:'Lưu ý',b:'Mắt IR thu nối GPIO0 vì lúc nghỉ nó giữ mức cao, nên board vẫn khởi động bình thường. IR phát nối GPIO20: chân này lên mức cao lúc bật nguồn, đèn IR sáng thoáng qua là bình thường.',warn:true}},
+ {id:'b8', ph:'B', cam:'insideL', title:'Motor N20 và mạch MX1508', focus:['devkit','mx','motors'], pins:['MX1508'],
+  do:['Cắm MX1508 vào GPIO45, 46, 19, 48 (chưa nối motor), bấm RST: board phải khởi động bình thường. Không khởi động được: hàn trở 10k từ GPIO45 xuống GND.','Tụ 470µF cắm sát chân + và − của MX1508 (chân dài là +). Tạm lấy 5V từ chân 5V của DevKit.','Nối 2 motor, kê lên cho khỏi chạy. Chạm nút: motor trái tiến, lùi rồi motor phải tiến, lùi (màn ghi đang thử motor nào).'],
+  check:['Từng motor quay đúng như màn ghi. Motor nào ngược thì đảo 2 dây của motor đó.','Board tự khởi động lại khi motor chạy: làm bước pin rồi thử lại.']},
+ {id:'b9', ph:'B', cam:'rear', title:'Nguồn pin, mạch sạc và chạy tất cả', focus:['holders','cells','charger','switch'], pins:['Đo pin','ESP32-S3 DevKit'],
   goal:'Hai pin 18650 nối song song, qua mạch sạc tăng áp lên 5V, qua công tắc rồi cấp cho cả robot.',
-  do:['Sạc đầy cả 2 pin bằng sạc đôi. Đo áp từng pin: chỉ nối song song khi 2 pin chênh dưới 0,05 V.','Nối 2 đế pin song song (đỏ với đỏ, đen với đen), vào B+ và B− của mạch sạc.','Đo ngõ ra 5V của mạch sạc: phải được 5,0–5,2 V. Nối ngõ ra qua công tắc.','Ráp cầu chia áp 100k/100k: điểm giữa vào GPIO1, đọc analog nhân 2 ra áp pin.','Rút cáp máy tính, chạy toàn bộ module bằng pin.'],
-  check:['Đo 5V khi motor đang chạy: không tụt dưới 4,7 V.','Áp pin đọc từ GPIO1 trong khoảng 3,6–4,2 V.','Cắm sạc USB-C vào mạch sạc: đèn báo sạc sáng.'],
-  tip:{t:'An toàn pin',b:'Không hàn trực tiếp lên thân pin. Không để 2 dây pin chạm nhau. Hai pin lệch áp mà nối song song sẽ xả vào nhau rất mạnh.',warn:true}},
+  do:['Sạc đầy cả 2 pin bằng sạc đôi. Có đồng hồ thì đo: chỉ nối song song khi 2 pin chênh dưới 0,05 V.','Nối đế pin vào B+ và B− của mạch sạc.','Đo ngõ ra 5V của mạch sạc: phải được 5,0–5,2 V. Nối ngõ ra qua công tắc.','Ráp cầu chia áp 100k/100k: điểm giữa vào GPIO1.','Rút cáp máy tính, bật công tắc chạy bằng pin, chạm nút chạy lại chuỗi thử.'],
+  check:['Dòng “Pin” trên màn trong khoảng 3,6–4,2 V.','Motor chạy mà board không tự khởi động lại.','Cắm sạc USB-C vào mạch sạc: đèn báo sạc sáng.'],
+  tip:{t:'An toàn pin',b:'Không hàn trực tiếp lên thân pin. Không để 2 dây pin chạm nhau. Hai pin lệch áp mà nối song song sẽ xả vào nhau rất mạnh. Khi nạp code bằng máy tính, để công tắc tắt.',warn:true}},
 
  // ---------------- C. LẮP RÁP ----------------
  {id:'c1', ph:'C', cam:'insideL', title:'Đế pin vào khay đáy',
@@ -326,28 +321,30 @@ const STEPS = [
  {id:'c5', ph:'C', cam:'insideR', title:'Ampli và loa ở vách phải',
   do:['Dán MAX98357A lên vách phải, phía dưới. Hàn tụ 470µF vào chân VIN và GND.','Dán loa oval lên vách phải, phía trên, mặt loa quay ra ngoài.','Đi dây nguồn từ thanh nguồn vòng qua phía sau, phía trên đầu đế pin, sang vách phải.','Hàn 3 dây xanh dương vào BCLK, LRC, DIN, để dài 120 mm, luồn lên nóc.','Dây loa xoắn đôi, càng ngắn càng tốt.'],
   check:['Loa không chạm motor phải.','Dây nguồn đi sát thanh đồng, không vắt ngang giữa thân.'], labels:'c5'},
- {id:'c6', ph:'C', cam:'front', title:'Mặt trước: TOF050C, OLED và TFT',
-  do:['Hàn dây dài 150 mm vào chân TOF050C, OLED và TFT trước khi gắn.','Nối song song I2C ngay tại chân OLED: dây vàng, xanh lá từ TOF lên OLED rồi đi tiếp lên nóc.','Dán TOF050C dưới thanh ngang trước dưới, mắt cảm biến nhìn thẳng ra trước.','Gắn OLED vào viền nhỏ, TFT vào viền lớn. Chấm keo nến ở 4 góc phía sau module, không để keo dính mặt kính.'],
-  check:['Hai màn không nghiêng, khe hở quanh viền đều nhau.','Mắt TOF050C không bị thanh đồng che.'], labels:'c6'},
- {id:'c7', ph:'C', cam:'roof', title:'Đế cắm ESP32 trên nóc',
-  goal:'ESP32 cắm trên header cái nên rút ra được khi cần sửa. Toàn bộ dây hàn ở mặt dưới đế.',
-  do:['Cắt PCB lỗ 72 × 30 mm.','Cắm 2 hàng header cái vào chân DevKit trước, đặt lên PCB rồi mới hàn, để chắc chắn khớp khoảng cách.','Bắt PCB lên 2 ray nóc bằng 4 vòng dây đồng mảnh (hoặc kẹp đồng và ốc M2).','Kéo 3 dây từ thanh nguồn lên: đỏ vào 5V, đen vào GND, trắng (điểm giữa cầu chia) vào GPIO1. Hàn ở mặt dưới đế.','Cắm DevKit vào, cổng USB-C quay ra sau.'],
-  check:['Rút và cắm DevKit dễ dàng.','Cắm được cáp USB-C khi DevKit nằm trên nóc.'], labels:'c7'},
- {id:'c8', ph:'C', cam:'insideL', title:'Nối các bó dây vào đế nóc',
-  goal:'Đây là bước quyết định độ gọn đẹp. Làm từng bó, xong bó nào đo bó đó.',
-  do:['Bó motor (4 dây nâu): cắt vừa đủ, chừa 15 mm, hàn vào GPIO45, 46, 48, 20.','Bó I2S (3 dây xanh dương) từ ampli: hàn vào GPIO2, 42, 40.','Bó trước, nhánh màn TFT: 3 dây tím vào GPIO21, 47, 14; dây trắng RST vào EN; cam vào 3V3; đen vào GND.','Bó trước, nhánh I2C (vàng, xanh lá, cam, đen) vào GPIO38, 39, 3V3, GND.','Mỗi bó: bọc đai co nhiệt 5 mm cách nhau 20 mm, buộc vào thanh đồng bằng 2 vòng dây đồng mảnh.'],
-  check:['Đo thông mạch từng dây từ chân header đến chân module.','Cắm USB, nạp chương trình thử tổng hợp: 2 màn, TOF, loa, motor chạy như phần B.'], labels:'c8'},
+ {id:'c6', ph:'C', cam:'front', title:'Mặt trước: TOF050C, SHT31 và TFT',
+  do:['Hàn dây dài 150 mm vào chân TOF050C, SHT31 và TFT trước khi gắn (đầu kia giữ đầu Dupont cái).','Nối song song I2C ngay tại chân TOF050C: dây vàng, xanh lá rẽ sang SHT31.','Dán TOF050C dưới thanh ngang trước dưới, mắt cảm biến nhìn thẳng ra trước. Dán SHT31 bên cạnh, lệch trái, lỗ cảm biến thoáng.','Gắn TFT vào viền: chấm keo nến ở 4 góc phía sau module, không để keo dính mặt kính.'],
+  check:['Màn không nghiêng, khe hở quanh viền đều nhau.','Mắt TOF050C không bị thanh đồng che.'],
+  tip:{t:'Lưu ý SHT31',b:'Để SHT31 xa ampli, MX1508 và mạch sạc vì các mạch này ấm lên, làm số nhiệt độ cao hơn thực tế.'}, labels:'c6'},
+ {id:'c7', ph:'C', cam:'roof', title:'Đế ESP32 trên nóc',
+  goal:'ESP32 nằm trên tấm PCB lỗ. Dây Dupont cái cắm thẳng vào chân board nên rút ra được khi sửa, không hàn gì vào board.',
+  do:['Cắt PCB lỗ 70 × 30 mm.','Đặt board lên PCB, chấm keo nến 4 góc hoặc buộc dây đồng mảnh qua lỗ PCB. Chân board chĩa xuống thì khoét rãnh cho chân lọt.','Bắt PCB lên 2 ray nóc bằng 4 vòng dây đồng mảnh.','Kéo 3 dây Dupont từ thanh nguồn lên: đỏ cắm 5V, đen cắm GND, trắng (điểm giữa cầu chia) cắm GPIO1.','Cổng USB-C quay ra sau.'],
+  check:['Board không xê dịch.','Cắm được cáp USB-C khi board nằm trên nóc.'], labels:'c7'},
+ {id:'c8', ph:'C', cam:'insideL', title:'Cắm các bó dây vào ESP32',
+  goal:'Đây là bước quyết định độ gọn đẹp. Làm từng bó, xong bó nào soát bó đó.',
+  do:['Mỗi chân ESP32 chỉ cắm được 1 đầu Dupont. Các dây cùng nối 1 chân (3V3, GND, GPIO2, GPIO42) hàn nối chung thành 1 dây trước (nối chữ Y cách đầu cắm khoảng 3 cm), bọc co nhiệt, rồi mới cắm.','Bó motor (4 dây nâu): đầu Dupont cái cắm vào GPIO45, 46, 19, 48.','Bó I2S (3 dây xanh dương) từ ampli: GPIO2, 42, 40. Dây SCK, WS của mic nối chữ Y vào 2 dây BCLK, LRC này.','Bó trước, nhánh màn TFT: 3 dây tím vào GPIO21, 47, 14; dây trắng RST vào EN; cam vào 3V3; đen vào GND.','Bó trước, nhánh I2C (vàng, xanh lá, cam, đen) vào GPIO38, 39, 3V3, GND.','Mỗi bó: bọc đai co nhiệt 5 mm cách nhau 20 mm, buộc vào thanh đồng bằng 2 vòng dây đồng mảnh.'],
+  check:['Soát từng dây cắm đúng chân theo tab “Chân nối”.','Nạp lại qbk-test.bin (công tắc tắt khi nạp), chạy lại như phần B: màn, TOF, SHT31, loa, motor đều OK.'], labels:'c8'},
  {id:'c9', ph:'C', cam:'roof', title:'Module trên nóc: camera, mic, IR, nút chạm',
-  do:['Cắm cáp dẹt camera, dán camera ở mép trước nóc, ống kính ló ra trước.','Mỗi module nhỏ gắn trên một mẩu PCB lỗ, bắc từ ray nóc sang thanh hông: IR phát trước-trái (LED hướng ra trước), mic trước-phải, IR thu sau-trái, nút chạm sau-phải.','Dây của các module này đi sát mặt PCB, chui xuống dưới đế nóc rồi hàn vào header. Trên nóc chỉ thấy đoạn dây ngắn nhất.'],
-  check:['Camera lên hình, robot nghe và nói được, IR học và phát được lệnh.'], labels:'c9'},
+  do:['Cắm cáp dẹt camera, dán camera ở mép trước nóc, ống kính ló ra trước.','Mỗi module nhỏ gắn trên một mẩu PCB lỗ, bắc từ ray nóc sang thanh hông: IR phát trước-trái (LED hướng ra trước), mic trước-phải, IR thu sau-trái, nút chạm sau-phải.','Dây của các module này đi sát mặt PCB, đầu Dupont cắm vào chân board. Trên nóc chỉ để đoạn dây ngắn nhất.'],
+  check:['Camera, mic, IR thu, nút chạm đều báo OK trên qbk-test.'], labels:'c9'},
  {id:'c10', ph:'C', cam:'rear', title:'Hai đèn Edison ở cuối nóc',
-  do:['Thử đèn trên breadboard trước: 5V qua trở 150 Ω. Sáng yếu thì đổi trở 100 Ω.','Uốn 4 kẹp chữ U nhỏ, hàn lên đầu sau 2 ray nóc.','Kẹp 2 ống đèn nằm ngang theo chiều rộng thân.','Đầu + của đèn qua trở (đặt trên đế nóc) lên 5V, đầu − về GND. Đèn sáng mỗi khi bật công tắc.'],
-  check:['Hai đèn sáng đều nhau.','Sau 5 phút đèn và trở không nóng tay.'], labels:'c10'},
+  do:['Xem điện áp ghi trên đèn hoặc trang shop: đèn 3V nối + vào 3V3, đèn 5V nối + vào dải 5V. Đầu − về GND. Không rõ thì thử 3V3 trước.','Uốn 4 kẹp chữ U nhỏ, hàn lên đầu sau 2 ray nóc.','Kẹp 2 ống đèn nằm ngang theo chiều rộng thân. Đèn sáng mỗi khi bật công tắc.'],
+  check:['Hai đèn sáng đều nhau.','Sau 5 phút đèn không nóng tay.'],
+  tip:{t:'Lưu ý',b:'Đèn ghi 3V mà không có mạch hạn dòng thì không nối thẳng 5V, dễ cháy.',warn:true}, labels:'c10'},
  {id:'c11', ph:'C', cam:'iso', title:'Lắp pin, chạy thử toàn bộ',
-  do:['Đo lại 2 pin: chênh dưới 0,05 V.','Lắp pin đúng cực, bật công tắc, đo dải 5V.','Nạp firmware đầy đủ, thử từng chức năng: nói chuyện, 2 màn, camera, IR, motor.','Thử sạc USB-C cả khi công tắc tắt và khi bật.'],
+  do:['Đo lại 2 pin: chênh dưới 0,05 V.','Lắp pin đúng cực, bật công tắc, đo dải 5V.','Nạp firmware chính qbk-robo-xiaozhi-vi.bin (công tắc tắt khi nạp). Cài WiFi, gắn robot vào xiaozhi.me, thử: nói chuyện, màn, camera, khoảng cách, nhiệt độ, học và phát lệnh máy lạnh, nhảy, nhạc, lái bằng lời.','Thử sạc USB-C cả khi công tắc tắt và khi bật.'],
   check:['Mọi chức năng chạy.','Sau 15 phút không có gì nóng bất thường. MX1508, ampli, mạch sạc chỉ ấm là được.']},
  {id:'c12', ph:'C', cam:'sideL', title:'Lắp bánh xích',
-  do:['Ép bánh răng 64T vào trục chữ D của N20, nhỏ một giọt keo.','Xỏ ốc M3 qua mắt bánh căng và mắt bánh đỡ, lắp bánh, siết 2 đai ốc chặn nhau để bánh quay trơn mà không lỏng.','Lắp xích, kiểm tra độ căng.'],
+  do:['Lắp bánh chủ động của bộ xích N20 vào trục chữ D của motor (trục dài), nhỏ một giọt keo.','Xỏ trục/ốc của bộ xích qua mắt bánh căng và mắt bánh đỡ, lắp bánh, siết 2 đai ốc chặn nhau để bánh quay trơn mà không lỏng.','Lắp xích, kiểm tra độ căng.'],
   check:['Robot chạy thẳng trên sàn.','Quay tại chỗ không tuột xích.']},
  {id:'c13', ph:'C', cam:'iso', title:'Soát lại và hoàn thiện',
   do:['Không mối hàn trần nào chạm khung đồng. Mọi mối nối dây đã bọc co nhiệt.','Không dây nào đi gần bánh răng. Bó dây cách xích ít nhất 5 mm.','Dây thừa xếp gọn theo thanh đồng, không thắt nút.','Chụp ảnh 4 phía gửi em soát lại.'],
@@ -432,7 +429,6 @@ begin('midRails'); for(const z of [HZ,-HZ]) line([-HX,42,z],[HX,42,z]);
 begin('tray'); for(const z of [-22,0,22]) line([-40,Y0+1.6,z],[40,Y0+1.6,z]);
 begin('posts'); for(const z of [HZ,-HZ]){ for(const x of [15,29,-36]) line([x,Y0,z],[x,42,z]); }
 begin('bezels'); tube(rrect(62,39,3).map(([z,y])=>[HX+0.4,y+61.5,z]), true);
-  tube(rrect(42,15,2.5).map(([z,y])=>[HX+0.4,y+32.3,z]), true);
 begin('rearPosts'); for(const z of [20,-20]) line([-HX,24,z],[-HX,49,z]);
 begin('eyes'); for(const s of [1,-1]){ for(const [x,y] of [[-36,22.8],[-16,9.8],[2,9.8]]){ const t=new THREE.Mesh(new THREE.TorusGeometry(1.9,0.8,8,20),mat.brass); t.position.set(x,y,s*(HZ+1.6)); add(t); } }
 
@@ -450,9 +446,8 @@ begin('mx'); box(24,21,1.6,mat.pcbBlue,-8,46,-30.4); cyl(4,12,mat.cap,-17,60,-27
 begin('amp'); box(18,18,1.6,mat.pcbPurple,0,22,30.4); cyl(4,12,mat.cap,10,30,27);
 begin('speaker'); { const o=cyl(10,6,mat.pcbBlack,-17,46,28,'z',40); o.scale.x=1.5; }
 begin('tof'); box(2,13,25,mat.pcbBlack,50.4,15,0); for(const z of [-5,5]) cyl(1.8,1,mat.silver,51.6,15,z,'x');
-begin('oled'); box(2,12,38,mat.pcbBlue,49,32.3,0); box(0.5,7,24,mat.pcbBlack,50.1,32.3,0);
-  { const wp=[]; for(let i=0;i<=60;i++){ const z=-11+22*i/60; wp.push(new THREE.Vector3(50.45, 32.3+Math.sin(i*0.9)*Math.sin(i*0.17)*2.6, z)); }
-    cur.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(wp), new THREE.LineBasicMaterial({color:0xe8f4ff}))); }
+begin('sht'); box(2,10,13,mat.pcbPurple,52.2,15.5,-21); cyl(2.6,0.6,mat.silver,53.4,17,-23,'x'); box(1,2.4,2.4,mat.pcbBlack,53.4,13.5,-19);
+{ begin('tftmouth'); const wp=[]; for(let i=0;i<=60;i++){ const z=-10+20*i/60; wp.push(new THREE.Vector3(50.45, 52+Math.sin(i*0.9)*Math.sin(i*0.17)*2.2, z)); } cur.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(wp), new THREE.LineBasicMaterial({color:0x38e1ff}))); }
 begin('tft'); box(3,35,57,mat.pcbBlue,48.3,61.5,0); box(0.6,28,36,mat.pcbBlack,49.9,61.5,0);
   for(const z of [-9,9]){ const e=new THREE.Mesh(new THREE.CircleGeometry(6,40),basic(0x38e1ff)); e.position.set(50.3,63,z); e.rotation.y=Math.PI/2; cur.add(e);
     const h=new THREE.Mesh(new THREE.CircleGeometry(1.8,20),basic(0xffffff)); h.position.set(50.4,65.5,z+2.5); h.rotation.y=Math.PI/2; cur.add(h); }
@@ -517,6 +512,7 @@ begin('w_mx'); bundle([[-27,34,-29.4],[-21,40,-29.4],[-16,43,-29.4]],['red','bla
 begin('w_amp'); bundle([[-30,38,-29.4],[-43,48,-18],[-43,48,18],[-24,34,29],[-9,26,29]],['red','black'],[0,1,0],1.6,0.7);
   bundle([[5,28,29],[-2,36,28.5],[-8,42,27]],['grey','grey'],[1,0,0]);
 begin('w_up'); bundle([[-36,39,-29.4],[-38,52,-24],[-30,61,-13],roofW(-17,1,-6)],['red','black','white'],[0,0,1]);
+begin('w_sht'); bundle([[47.6,26,11],[48.6,22.8,4],[49.2,22.8,-12],[50.6,19,-17],[51.2,16,-19.5]],['yellow','green','orange','black'],[0,1,0],1.1);
 begin('w_harness');
   bundle([[-4,56,-29.4],[0,64,-18],[2,69,-10],roofW(3,1,-7)],['brown','brown','brown','brown'],[1,0,0]);
   bundle([[2,31,29],[4,48,26],[6,62,14],roofW(8,1,7)],['blue','blue','blue'],[1,0,0]);
@@ -531,7 +527,7 @@ begin('w_edison'); for(const x of [-28,-36]){ bundle(L([[x,4,15],[x+4,1,11],[-21
 
 const INTRO = { side:'a2', crossBottom:'a3', crossFR:'a4', crossTop:'a5', rails:'a5', midRails:'a6', tray:'a6', posts:'a6', bezels:'a7', rearPosts:'a7', eyes:'a8',
   holders:'c1', charger:'c2', switch:'c2', w_bat:'c2', bus:'c3', w_pwr:'c3', motors:'c4', mx:'c4', w_mx:'c4', amp:'c5', speaker:'c5', w_amp:'c5',
-  tof:'c6', oled:'c6', tft:'c6', perf:'c7', devkit:'c7', w_up:'c7', w_harness:'c8', camera:'c9', mic:'c9', irtx:'c9', irrx:'c9', touch:'c9', w_roof:'c9',
+  tof:'c6', sht:'c6', w_sht:'c6', tft:'c6', tftmouth:'c6', perf:'c7', devkit:'c7', w_up:'c7', w_harness:'c8', camera:'c9', mic:'c9', irtx:'c9', irrx:'c9', touch:'c9', w_roof:'c9',
   edison:'c10', w_edison:'c10', cells:'c11', drive:'c12', idler:'c12', road:'c12', track:'c12' };
 const IDX = Object.fromEntries(STEPS.map((s,i)=>[s.id,i]));
 
@@ -569,18 +565,18 @@ cam.position.set(...CAMS.iso[0]); controls.target.set(...CAMS.iso[1]);
 
 /* ---------- nhãn kích thước ---------- */
 const LABELS = {
-  cut:[{p:[0,2,72],t:'2 vòng hông · 305'},{p:[0,2,82],t:'2 ray nóc · 70'},{p:[0,2,95],t:'2 giữa hông · 98,4'},{p:[0,2,122],t:'8 thanh ngang · 62,4'},{p:[0,2,165],t:'3 khay · 80'},{p:[0,2,187],t:'6 cột · 32,4'},{p:[0,2,218],t:'viền TFT 200 · OLED 112 · cửa sau 23,4'}],
+  cut:[{p:[0,2,72],t:'2 vòng hông · 305'},{p:[0,2,82],t:'2 ray nóc · 70'},{p:[0,2,95],t:'2 giữa hông · 98,4'},{p:[0,2,122],t:'8 thanh ngang · 62,4'},{p:[0,2,165],t:'3 khay · 80'},{p:[0,2,187],t:'6 cột · 32,4'},{p:[0,2,218],t:'viền TFT 200 · cửa sau 23,4'}],
   a2:[{p:[0,Y0-7,HZ],t:'đáy 100'},{p:[HX+9,45,HZ],t:'trước 74'},{p:[-HX-9,35,HZ],t:'sau 54'},{p:[0,80,HZ],t:'nóc dốc 102'},{p:[46,13,HZ],t:'R14 · ống PVC Ø27'},{p:[0,Y0+4,HZ],t:'mối nối'}],
   a3:[{p:[34,Y0+4,0],t:'62,4'},{p:[-34,Y0+4,0],t:'62,4'},{p:[42,Y0-6,HZ],t:'cách mũi 16'},{p:[-42,Y0-6,HZ],t:'cách đuôi 16'}],
   a4:[{p:[HX+6,24,0],t:'cao 16'},{p:[HX+6,63,0],t:'cao 55'},{p:[-HX-6,24,0],t:'cao 16'},{p:[-HX-6,49,0],t:'cao 41'}],
   a5:[{p:roofW(-4,3,15),t:'ray 70'},{p:roofW(10,3,0),t:'2 ray cách nhau 30'},{p:[TOPF[0],TOPF[1]+5,-HZ],t:'cách mặt trước 19,6'},{p:roofW(-37,3,-15),t:'chìa 8'}],
   a6:[{p:[-10,45,-HZ],t:'giữa hông · cao 34'},{p:[22,24,-HZ-3],t:'2 cột kẹp N20 · cách 14'},{p:[-36,30,-HZ-3],t:'cột bánh căng'},{p:[0,Y0+3,0],t:'khay pin'}],
-  a7:[{p:[HX+2,84,0],t:'viền TFT 62×39'},{p:[HX+2,42,22],t:'viền OLED 42×15'},{p:[-HX-3,36,0],t:'cửa sau 40'}],
+  a7:[{p:[HX+2,84,0],t:'viền TFT 62×39'},{p:[-HX-3,36,0],t:'cửa sau 40'}],
   a8:[{p:[-36,26,-HZ-5],t:'mắt bánh căng'},{p:[-7,13,-HZ-5],t:'2 mắt bánh đỡ'}],
   c1:[{p:[-10,34,0],t:'2 đế pin song song'}], c2:[{p:[-52,33,-6],t:'mạch sạc + USB-C'},{p:[-52,50,10],t:'công tắc'}],
   c3:[{p:[-37,40,-31],t:'thanh nguồn 5V / GND'}], c4:[{p:[22,46,-22],t:'N20 kẹp giữa 2 cột'},{p:[-8,58,-31],t:'MX1508 + tụ 470µF'}],
-  c5:[{p:[0,13,31],t:'MAX98357A'},{p:[-17,58,29],t:'loa oval'}], c6:[{p:[52,80,0],t:'TFT'},{p:[52,40,0],t:'OLED'},{p:[52,8,0],t:'TOF050C'}],
-  c7:[{p:roofW(13,20,0),t:'DevKit trên header cái'},{p:roofW(-25,5,0),t:'USB-C quay ra sau'}],
+  c5:[{p:[0,13,31],t:'MAX98357A'},{p:[-17,58,29],t:'loa oval'}], c6:[{p:[52,80,0],t:'TFT'},{p:[54,22,-24],t:'SHT31'},{p:[52,8,0],t:'TOF050C'}],
+  c7:[{p:roofW(13,20,0),t:'DevKit trên PCB lỗ, cắm Dupont'},{p:roofW(-25,5,0),t:'USB-C quay ra sau'}],
   c8:[{p:[46,72,-14],t:'bó trước: SPI + I2C'},{p:[0,68,-24],t:'bó motor'},{p:[4,56,26],t:'bó I2S'},{p:[-36,56,-26],t:'nguồn lên nóc'}],
   c9:[{p:roofW(52,14,0),t:'camera'},{p:roofW(40,8,-26),t:'IR phát'},{p:roofW(40,8,26),t:'mic'},{p:roofW(-14,9,-26),t:'IR thu'},{p:roofW(-14,9,26),t:'nút chạm'}],
   c10:[{p:roofW(-32,14,0),t:'2 đèn Edison'}],
@@ -672,8 +668,8 @@ const mods=[...new Set(PINS.map(r=>r[0]))];
 $('#tab-pins').innerHTML = `<section><h2>Bảng chân nối</h2>
   <p>Bản tạm, lập theo board ESP32-S3 N16R8 có camera. Camera dùng 14 chân cố định của board (GPIO4–13, 15–18). Khi có sơ đồ của shop em sẽ đối chiếu lại.</p>
   ${pinTable(PINS,true)}</section>
-  <section><h2>Chân đặc biệt</h2><div class="tip warn"><b>GPIO19, GPIO20</b> là chân USB gốc, dùng cho IR phát và motor, nên luôn nạp code qua cổng USB-C “COM”.
-  <b>GPIO0, 45, 46</b> là chân khởi động. Đã chọn module không kéo sai mức lúc bật: IR thu giữ mức cao, MX1508 có trở kéo xuống. Nếu board không chạy khi bật, rút dây GPIO0 ra thử. <b>GPIO48</b> nối đèn RGB trên một số board, đèn có thể nháy khi motor chạy, không sao.</div></section>`;
+  <section><h2>Chân đặc biệt</h2><div class="tip warn"><b>GPIO19, GPIO20</b> là chân USB gốc (GPIO19 cho motor IN3, GPIO20 cho IR phát), nên luôn nạp code qua cổng USB-C “COM”. GPIO20 lên mức cao lúc bật nguồn nên dành cho IR phát, không dùng cho motor.
+  <b>GPIO0, 45, 46</b> là chân khởi động. Đã chọn module không kéo sai mức lúc bật: IR thu giữ mức cao, MX1508 có trở kéo xuống. Nếu board không chạy khi bật, rút dây GPIO0 ra thử. <b>GPIO48</b> (motor IN4) nối đèn RGB trên board, đèn có thể nháy khi motor phải chạy, không sao. TOF050C và SHT31 dùng cổng I2C 0, camera tự dùng cổng I2C 1.</div></section>`;
 
 /* tab Cắt đồng */
 const tot = CUTS.reduce((a,c)=>a+c.n*c.L,0);
@@ -691,7 +687,7 @@ $('#tab-cuts').innerHTML = `<section><h2>Bảng cắt đồng Ø1,6</h2><p>3 tha
   <tr><td>Ray nóc</td><td class="m">cách tâm ±15 · chìa ra sau 8</td></tr><tr><td>Giữa hông</td><td class="m">cao 34</td></tr>
   <tr><td>Khay đáy</td><td class="m">tâm · ±22</td></tr><tr><td>Cột kẹp motor</td><td class="m">cách mặt trước 21 và 35</td></tr>
   <tr><td>Cột bánh căng</td><td class="m">cách mặt trước 86</td></tr><tr><td>Viền TFT</td><td class="m">cạnh dưới cao 34</td></tr>
-  <tr><td>Viền OLED</td><td class="m">cạnh dưới trên thanh ngang trước dưới</td></tr><tr><td>Cửa sau</td><td class="m">cách tâm ±20</td></tr>
+  <tr><td>Cửa sau</td><td class="m">cách tâm ±20</td></tr>
   <tr><td>Tâm trục motor</td><td class="m">cao ≈ 29 · cách mặt trước 28</td></tr></tbody></table></div></section>`;
 
 /* tab Đi dây đẹp */
@@ -699,7 +695,7 @@ $('#tab-wiring').innerHTML = `<section><h2>Mã màu dây</h2><p>Giữ đúng mà
   <div class="colors">${Object.keys(WC).map(c=>`<div><span class="sw" style="background:${hex(c)}"></span><span><b>${WNAME[c]}</b> · ${WUSE[c]}</span></div>`).join('')}</div></section>
   <section><h2>Đường đi của các bó</h2><div class="tbl"><table><thead><tr><th>Bó</th><th>Đi từ → đến</th><th>Đường đi</th></tr></thead><tbody>
   <tr><td>Nguồn lên nóc</td><td>Thanh nguồn → đế nóc</td><td>Bám góc sau-trái, đi lên theo cạnh dốc, chui vào dưới đế nóc</td></tr>
-  <tr><td>Bó trước</td><td>Đế nóc → TFT, OLED, TOF</td><td>Xuống mặt trong của mặt trước. Nhánh SPI dừng ở TFT, nhánh I2C đi tiếp xuống OLED rồi TOF</td></tr>
+  <tr><td>Bó trước</td><td>ESP32 → TFT, TOF050C, SHT31</td><td>Xuống mặt trong của mặt trước. Nhánh SPI dừng ở TFT, nhánh I2C đi tiếp xuống TOF050C rồi rẽ sang SHT31</td></tr>
   <tr><td>Bó motor</td><td>Đế nóc → MX1508</td><td>Xuống vách trái, bám thanh giữa hông</td></tr>
   <tr><td>Bó I2S</td><td>Đế nóc → ampli</td><td>Xuống vách phải, đi sau loa</td></tr>
   <tr><td>Nguồn ampli</td><td>Thanh nguồn → ampli</td><td>Vòng qua phía sau thân, phía trên đầu đế pin</td></tr>

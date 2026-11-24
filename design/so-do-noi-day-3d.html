@@ -199,7 +199,7 @@ begin('w_roof');
   bundle(L([[33,3.6,-19],[28,2.6,-15],[22,1.2,-10]]),['red','black','white'],[1,0,0]);
   bundle(L([[-9,3.6,-19],[-5,2.6,-15],[0,1.2,-10]]),['orange','black','white'],[1,0,0]);
   bundle(L([[-9,3.6,19],[-5,2.6,15],[0,1.2,10]]),['orange','black','white'],[1,0,0]);
-begin('w_edison'); for(const x of [-28,-36]){ bundle(L([[x,4,15],[x+4,1,11],[-21,1,8]]),['red'],[1,0,0]); bundle(L([[x,4,-15],[x+4,1,-11],[-21,1,-8]]),['black'],[1,0,0]); }
+begin('w_edison'); for(const x of [-28,-36]){ bundle(L([[x,4,15],[x+4,1,11],[-21,1,8]]),['orange'],[1,0,0]); bundle(L([[x,4,-15],[x+4,1,-11],[-21,1,-8]]),['black'],[1,0,0]); }
 
 
 
@@ -231,16 +231,16 @@ const V = (p)=>new THREE.Vector3(...p);
 const VIEWS = [
  { el:'v1', pos:[205,165,-235], tgt:[2,42,-4], title:'Nhìn chéo trước-trái',
    items:[
-    {a:roofW(13,14,-8), t:'ESP32-S3 DevKit', r:[['grey','Cắm trên đế header cái, nóc'],['grey','Dây hàn ở mặt dưới đế']]},
+    {a:roofW(13,14,-8), t:'ESP32-S3 DevKit', r:[['grey','Nằm trên PCB lỗ 70×30 ở nóc'],['grey','Dây cắm đầu Dupont cái vào chân board']]},
     {a:roofW(53,8,0), t:'Camera OV3660', r:[['grey','Cáp dẹt FPC vào đầu cắm board']]},
-    {a:roofW(44.5,5.5,-23), t:'IR phát', r:[['white','SIG → GPIO19'],['red','VCC → 5V'],['black','GND']]},
-    {a:roofW(-32,7,-14), t:'2 đèn Edison', r:[['red','+ → trở 150 Ω → 5V'],['black','− → GND']]},
+    {a:roofW(44.5,5.5,-23), t:'IR phát', r:[['white','SIG → GPIO20'],['red','VCC → 5V'],['black','GND']]},
+    {a:roofW(-32,7,-14), t:'2 đèn Edison', r:[['orange','+ → 3V3 (đèn 5V thì nối 5V)'],['black','− → GND']]},
     {a:roofW(-14,7,-23), t:'IR thu', r:[['white','OUT → GPIO0'],['orange','VCC → 3V3'],['black','GND']]},
     {a:[48.5,70,-24], t:'TFT 1.8" ST7735 · mắt + miệng sóng âm', r:[['purple','SCK → GPIO21'],['purple','MOSI → GPIO47'],['purple','DC → GPIO14'],['white','RST → EN'],['orange','VCC, BL → 3V3'],['black','GND, CS → GND']]},
     {a:[51,15,-8], t:'TOF050C (I2C 0x29)', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VIN → 3V3'],['black','GND']]},
     {a:[53,15.5,-21], t:'SHT31 tím (I2C 0x44) · mới', r:[['yellow','SDA → GPIO38'],['green','SCL → GPIO39'],['orange','VIN → 3V3'],['black','GND']]},
     {a:[22,36.8,-24], t:'Motor N20 trái', r:[['grey','2 dây xoắn đôi → MOTOR-A']]},
-    {a:[-8,50,-31], t:'MX1508 + tụ 470 µF', r:[['brown','IN1–IN4 → GPIO45, 46, 48, 20'],['red','VCC → 5V'],['black','GND']]},
+    {a:[-8,50,-31], t:'MX1508 + tụ 470 µF', r:[['brown','IN1–IN4 → GPIO45, 46, 19, 48'],['red','VCC → 5V'],['black','GND']]},
     {a:[-37,32,-31], t:'Thanh nguồn 5V / GND', r:[['red','5V sau công tắc'],['white','Cầu chia 100k/100k → GPIO1'],['red','Dây lên nóc: 5V, GND, đo pin']]},
    ]},
  { el:'v2', pos:[-215,175,235], tgt:[-2,42,4], title:'Nhìn chéo sau-phải',

@@ -207,7 +207,7 @@ const C = { pcbBlack:'#141518', red:'#b8262b', purple:'#4f2c8f', blue:'#1c4796',
 /* ---------- ESP32-S3 DevKit trên đế ---------- */
 const J1=['3V3','3V3','RST','4','5','6','7','15','16','17','18','8','3','46','9','10','11','12','13','14','5V','G'];
 const J3=['G','TX','RX','1','2','42','41','40','39','38','37','36','35','0','45','48','47','21','20','19','G','G'];
-const PINCOL={'3V3':'#f08a24','5V':'#ff6a5a','G':'#cfcfcf','RST':'#f0f0f0','21':'#b98af0','47':'#b98af0','14':'#b98af0','38':'#f2c81e','39':'#4fd06f','2':'#6ea0ff','42':'#6ea0ff','41':'#6ea0ff','40':'#6ea0ff','45':'#c08a5a','46':'#c08a5a','48':'#c08a5a','20':'#c08a5a','0':'#f0f0f0','1':'#f0f0f0','3':'#f0f0f0','19':'#f0f0f0'};
+const PINCOL={'3V3':'#f08a24','5V':'#ff6a5a','G':'#cfcfcf','RST':'#f0f0f0','21':'#b98af0','47':'#b98af0','14':'#b98af0','38':'#f2c81e','39':'#4fd06f','2':'#6ea0ff','42':'#6ea0ff','41':'#6ea0ff','40':'#6ea0ff','45':'#c08a5a','46':'#c08a5a','48':'#c08a5a','19':'#c08a5a','0':'#f0f0f0','1':'#f0f0f0','3':'#f0f0f0','20':'#f0f0f0'};
 const CAMPINS=new Set(['4','5','6','7','15','16','17','18','8','9','10','11','12','13']);
 const espPads=[]; J1.forEach((n,i)=>espPads.push(['J1:'+n+':'+i,-11.43,26.67-i*2.54,{text:n,col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
 J3.forEach((n,i)=>espPads.push(['J3:'+n+':'+i,11.43,26.67-i*2.54,{text:n,align:'right',off:[-1.45,0],col:PINCOL[n]||(CAMPINS.has(n)?'#7fb3c9':'#8a8f96')}]));
@@ -226,7 +226,7 @@ function espW(row,name,n=0){ const g=allMods.esp, d=g.userData.def, p=d.pads.fin
 
 mod('perf',{w:30,d:72,t:1.6,color:C.perf,perf:true,pads:[],
   draw:(x,P,mm)=>{ x.fillStyle='rgba(200,40,40,.85)'; x.fillRect(...P(9,-30),mm(1.3),mm(10)); x.fillStyle='rgba(20,20,20,.85)'; x.fillRect(...P(11.5,-30),mm(1.3),mm(10));
-    x.fillStyle='#f4f4f4'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('đế nóc · header cái',...P(0,-33.5)); }}, roofG, [13,3.2,0], 'roof');
+    x.fillStyle='#f4f4f4'; x.font=`700 ${mm(1.1)}px ${MONO}`; x.textAlign='center'; x.fillText('đế nóc · PCB lỗ 70×30',...P(0,-33.5)); }}, roofG, [13,3.2,0], 'roof');
 { const g=allMods.perf; for(const z of [-26,-22]){ gcyl(g,0.8,6,M({color:0xd6c08a,roughness:.5}),-10,0.8+0.8,z,'x'); } }
 
 /* ---------- Camera OV3660 ---------- */
@@ -327,18 +327,18 @@ const motW=(s,dy)=>[V3(22,36.8+dy,s*6.6), V3(22,36.8+dy,s*3.5)];
 
 
 /* =====================================================================
-   KỊCH BẢN LẮP: dây, mối hàn, chương
+   KỊCH BẢN LẮP: dây, mối nối, chương
    ===================================================================== */
 scene.updateMatrixWorld(true);
 const MODNAME={tft:'màn TFT',tof:'TOF050C',sht:'SHT31',mx:'MX1508',amp:'MAX98357A',mic:'mic INMP441',irtx:'IR phát',irrx:'IR thu',touch:'nút chạm',chg:'mạch sạc'};
 const CNAME={red:'đỏ',orange:'cam',black:'đen',yellow:'vàng',green:'xanh lá',purple:'tím',blue:'xanh dương',brown:'nâu',white:'trắng',grey:'xám'};
-const pinNice=n=>n==='G'?'GND':n==='RST'?'EN':/^\d/.test(n)?'GPIO'+n:n;
+const pinNice=n=>n==='G'?'GND':n==='RST'?'EN':/^\d+$/.test(n)?'GPIO'+n:n;
 function P(id,name,opt={}){ const nm=id==='bus'?(BUSALIAS[name]||name):name; const [pos,lead]=padW(id,nm,opt.side??-1,opt.extra||0);
   const d=allMods[id].userData.def; const idx=d.pads.findIndex(p=>p[0]===nm)+1;
   const desc= id==='bus' ? `Thanh nguồn · ô ${nm}` : (opt.desc || `${MODNAME[id]} · chân số ${idx} (${nm})`);
   return {pos,lead,desc,mod:id,label:id==='bus'?nm:nm}; }
 function E(row,name,n=0){ const [pos,lead]=espW(row,name,n); const idx=+espPin(row,name,n).split(':')[2]+1;
-  return {pos,lead,desc:`Đế nóc, mặt dưới · hàng ${row} (${row==='J1'?'bên phải':'bên trái'}) · lỗ số ${idx} = ${pinNice(name)}`,mod:'perf',label:`${row}-${idx} ${pinNice(name)}`}; }
+  return {pos,lead,desc:`ESP32 · cắm đầu Dupont cái vào hàng ${row} (${row==='J1'?'dãy có 3V3, 5V':'dãy có TX, RX'}) · chân số ${idx} = ${pinNice(name)}`,mod:'perf',label:`${row}-${idx} ${pinNice(name)}`}; }
 const X=(pos,lead,desc,label,mod)=>({pos:V3(...pos),lead:V3(...lead),desc,label,mod});
 
 const wireMat={}; const wmat=c=>wireMat[c]||(wireMat[c]=M({color:WC[c], roughness:.5}));
@@ -355,7 +355,7 @@ function W(a,b,color,o={}){ const r=o.r||0.5;
   w.ia=JOINTS.push({ch:o.chA,ord:o.oa??order++,wire:w,end:0,e:a,
      l1:`Dây ${CNAME[color]} ${awg} · cắt ${len} mm`, l2:`Hàn đầu 1 vào: ${a.desc}`})-1;
   w.ib=JOINTS.push({ch:o.chB,ord:o.ob??order++,wire:w,end:1,e:b,
-     l1:`Đầu còn lại của dây ${CNAME[color]} (${len} mm)`, l2:`Hàn vào: ${b.desc}`})-1;
+     l1:`Đầu còn lại của dây ${CNAME[color]} (${len} mm)`, l2:`${b.mod==='perf'?'Cắm vào':'Hàn vào'}: ${b.desc}`})-1;
   return w; }
 function Wb(list,via,axis,gap,o){ const n=list.length; list.forEach((it,i)=>{ const off=(i-(n-1)/2)*gap; W(it[0],it[1],it[2],{...o, r:it[3]||o.r, via:via.map(v=>v.clone().add(V3(axis[0]*off,axis[1]*off,axis[2]*off)))}); }); }
 function EX(ch,pos,l1,l2,label){ JOINTS.push({ch,ord:order++,extra:true,e:{pos:V3(...pos),lead:V3(pos[0],pos[1]+3,pos[2]),label,mod:null},l1,l2}); }
@@ -383,7 +383,7 @@ const MT=(s,dy)=>X([22,36.8+dy,s*6.6],[22,36.8+dy,s*3.5],`Motor ${s>0?'phải':'
 Wb([[MT(-1,2.2),P('mx','MA1',{desc:'MX1508 · lỗ MOTOR-A thứ 1'}),'grey'],[MT(-1,-2.2),P('mx','MA2',{desc:'MX1508 · lỗ MOTOR-A thứ 2'}),'grey']],[V3(16,38,-14),V3(6,38,-26)],[0,1,0],1.2,{chA:5,chB:5});
 Wb([[MT(1,2.2),P('mx','MB1',{desc:'MX1508 · lỗ MOTOR-B thứ 1'}),'grey'],[MT(1,-2.2),P('mx','MB2',{desc:'MX1508 · lỗ MOTOR-B thứ 2'}),'grey']],[V3(18,34,3),V3(12,30,-4),V3(6,52,-26)],[0,1,0],1.2,{chA:5,chB:5});
 EX(5,[-21,49,-27],'Tụ 470µF: chân dài (+) chung lỗ + của MX1508, chân ngắn (−) chung lỗ −','Uốn chân tụ cho thân tụ nằm sát vách, hàn chung với dây nguồn','tụ 470µF');
-Wb([[P('mx','IN1'),E('J3','45'),'brown'],[P('mx','IN2'),E('J1','46'),'brown'],[P('mx','IN3'),E('J3','48'),'brown'],[P('mx','IN4'),E('J3','20'),'brown']],[RWV2(2,-5,-3),V3(-2,64,-17),V3(-12,57,-27)].reverse(),[0,-1,0],1.2,{chA:5,chB:9});
+Wb([[P('mx','IN1'),E('J3','45'),'brown'],[P('mx','IN2'),E('J1','46'),'brown'],[P('mx','IN3'),E('J3','19'),'brown'],[P('mx','IN4'),E('J3','48'),'brown']],[RWV2(2,-5,-3),V3(-2,64,-17),V3(-12,57,-27)].reverse(),[0,-1,0],1.2,{chA:5,chB:9});
 /* --- Ampli, loa --- */
 const SPT=(s)=>X([s>0?-12:-22,46,25.4],[s>0?-12:-22,46,23.5],`Loa · cọc ${s>0?'+ (chấm đỏ)':'−'}`,s>0?'loa +':'loa −');
 W(SPT(1),P('amp','SPK+',{side:1,extra:4,desc:'MAX98357A · cọc vít + (vặn vít, không hàn)'}),'grey',{chA:6,chB:6,via:[V3(-12,40,27),V3(-6,30,33)]});
@@ -399,14 +399,13 @@ Wb([[P('tft','LED'),E('J1','3V3',0),'orange'],[P('tft','SCK'),E('J3','21'),'purp
 /* --- Nóc --- */
 Wb([[P('mic','SCK'),E('J3','2'),'blue'],[P('mic','WS'),E('J3','42'),'blue'],[P('mic','L/R'),E('J1','G'),'black'],[P('mic','SD'),E('J3','41'),'blue'],[P('mic','VDD'),E('J1','3V3',0),'orange'],[P('mic','GND'),E('J3','G',2),'black']],
   [RWV2(36,-3,24),RWV2(30,-4,17)],[1,0,0],1.15,{chA:8,chB:9});
-Wb([[P('irtx','SIG'),E('J3','19'),'white'],[P('irtx','VCC'),E('J1','5V'),'red'],[P('irtx','GND'),E('J3','G',2),'black']],[RWV2(30,-3,-18)],[1,0,0],1.2,{chA:8,chB:9});
+Wb([[P('irtx','SIG'),E('J3','20'),'white'],[P('irtx','VCC'),E('J1','5V'),'red'],[P('irtx','GND'),E('J3','G',2),'black']],[RWV2(30,-3,-18)],[1,0,0],1.2,{chA:8,chB:9});
 Wb([[P('irrx','OUT'),E('J3','0'),'white'],[P('irrx','VCC'),E('J1','3V3',1),'orange'],[P('irrx','GND'),E('J1','G'),'black']],[RWV2(-6,-3,-17)],[1,0,0],1.2,{chA:8,chB:9});
 Wb([[P('touch','I/O'),E('J1','3'),'white'],[P('touch','VCC'),E('J1','3V3',0),'orange'],[P('touch','GND'),E('J1','G'),'black']],[RWV2(-6,-3,18)],[1,0,0],1.2,{chA:8,chB:9});
 for(const [x,k] of [[-28,1],[-36,2]]){
-  W(X(roofW(x,2.4,15),roofW(x,-1,15),`Đèn Edison ${k} · đầu phải (+)`,'+ đèn'),{...E('J1','5V'),desc:E('J1','5V').desc+' (qua trở 150 Ω)'},'red',{chA:8,chB:9,via:[RWV2(-20,-3,11)]});
+  W(X(roofW(x,2.4,15),roofW(x,-1,15),`Đèn Edison ${k} · đầu phải (+)`,'+ đèn'),{...E('J1','3V3',0),desc:E('J1','3V3',0).desc+' (đèn 3V; đèn 5V thì cắm chân 5V)'},'orange',{chA:8,chB:9,via:[RWV2(-20,-3,11)]});
   W(X(roofW(x,2.4,-15),roofW(x,-1,-15),`Đèn Edison ${k} · đầu trái (−)`,'− đèn'),E('J3','G',1),'black',{chA:8,chB:9,via:[RWV2(-20,-3,-11)]}); }
-EX(9,roofW(13,2.4,0),'Hàn 2 hàng header cái 1×22 vào đế nóc (44 mối)','Cắm header vào chân ESP32 trước, đặt lên PCB rồi mới hàn cho khớp','header');
-EX(9,roofW(-28,2.4,6),'Trở 150 Ω cho đèn Edison: đặt trên đế nóc, nối lỗ 5V với 2 dây đỏ của đèn','Hàn trở trước, dây đèn hàn vào đầu kia của trở','trở 150 Ω');
+EX(9,roofW(13,2.4,0),'Đặt ESP32 lên tấm PCB lỗ 70×30 trên nóc, chấm keo nến 4 góc','Không hàn header: chân board chĩa xuống qua rãnh khoét, đầu Dupont cái cắm thẳng vào chân','ESP32');
 EX(10,roofW(16,15.5,0),'Cắm cáp dẹt camera vào đầu cắm trên ESP32, đóng chốt','Mặt tiếp điểm quay đúng chiều hướng dẫn của shop','camera');
 EX(10,[-10,22,0],'Lắp 2 pin 18650: đo 2 pin chênh dưới 0,05 V, lắp đúng cực','Cực + quay ra sau (phía mạch sạc)','2 pin');
 EX(10,[-50.5,43,9],'Bật công tắc, đo thanh nguồn: 5,0 – 5,2 V','Rồi cắm USB vào cổng COM để nạp firmware','bật');
@@ -420,11 +419,19 @@ const CH=[
  {title:'Ampli và loa',sub:'MAX98357A và loa trên vách phải.',show:['amp','spk','capAMP'],cam:[[-10,85,190],[-5,35,25]]},
  {title:'Mặt trước',sub:'TOF050C, SHT31 và màn TFT. Hàn dây vào module trước khi gắn.',show:['tof','sht','tft'],cam:[[190,85,-50],[45,38,0]]},
  {title:'Module trên nóc',sub:'Mic, IR phát, IR thu, nút chạm, 2 đèn Edison.',show:['subs','mic','irtx','irrx','touch','edison'],cam:[[90,210,100],[5,75,0]]},
- {title:'Đế nóc và ESP32',sub:'Mọi dây hàn vào mặt dưới đế nóc, đúng lỗ số trên 2 hàng header.',show:['perf','esp'],cam:[[110,160,-170],[10,70,0]]},
+ {title:'Đế nóc và ESP32',sub:'Đầu Dupont cái cắm thẳng vào chân ESP32, đúng số chân. Không hàn vào board.',show:['perf','esp'],cam:[[110,160,-170],[10,70,0]]},
  {title:'Camera, pin và bật thử',sub:'',show:['cam','fpc','cellL','cellR'],cam:[[190,150,-200],[5,45,0]]},
 ];
 JOINTS.forEach((j,i)=>j.k=i);
 JOINTS.sort((a,b)=>a.ch-b.ch || a.ord-b.ord);
+// Mỗi chân ESP32 chỉ cắm được 1 đầu Dupont: dây đầu tiên tới chân đó thì cắm,
+// các dây sau hàn nối chung (nối chữ Y) vào dây đang cắm, bọc co nhiệt.
+{ const used={};
+  for(const j of JOINTS){ if(j.extra || j.e.mod!=='perf') continue;
+    const pin=j.e.label;
+    if(used[pin]){ j.l2=`Hàn nối chung vào dây ${CNAME[used[pin]]} đang cắm chân ${pin} (nối chữ Y cách đầu cắm khoảng 3 cm), bọc co nhiệt`; j.e={...j.e,label:pin+' · nối Y'}; }
+    else used[pin]=j.wire.color;
+  } }
 
 /* ---------- dựng dòng thời gian ---------- */
 const TCH=3.2, TJ=2.6, TMOVE=1.0, TINTRO=4, TEND=5;
@@ -498,14 +505,14 @@ function setState(t,live=false){
   capEl.ch.textContent = ci>=0 ? `Chương ${ci+1}/${CH.length} · ${CH[ci].title}` : 'QBK-Robo · Video lắp ráp';
   capEl.bar.style.width=(t/TOTAL*100).toFixed(2)+'%';
   capEl.title.hidden=true;
-  if(cur.type==='intro'){ capEl.title.hidden=false; capEl.title.innerHTML=`<b>QBK-Robo</b><span>Lắp ráp và hàn từng mối · ${NJ} mối hàn, ${CH.length} chương</span>`; capEl.n.textContent=''; capEl.l1.textContent='Khung đồng đã hàn xong (phần A trong sổ tay).'; capEl.l2.textContent='Dây hàn vào mặt dưới lỗ chân. Chân GPIO là bản tạm, chờ sơ đồ board của shop.'; }
+  if(cur.type==='intro'){ capEl.title.hidden=false; capEl.title.innerHTML=`<b>QBK-Robo</b><span>Lắp ráp, hàn và cắm từng mối · ${NJ} mối nối, ${CH.length} chương</span>`; capEl.n.textContent=''; capEl.l1.textContent='Khung đồng đã hàn xong (phần A trong sổ tay).'; capEl.l2.textContent='Phía module: hàn dây vào mặt dưới lỗ chân. Phía ESP32: cắm đầu Dupont cái. Chân GPIO là bản tạm, chờ sơ đồ board của shop.'; }
   else if(cur.type==='chapter'){ const c=CH[cur.ci]; capEl.title.hidden=false; capEl.title.innerHTML=`<b>Chương ${cur.ci+1} · ${c.title}</b><span>${c.sub}</span>`; capEl.n.textContent=''; capEl.l1.textContent=c.sub; capEl.l2.textContent=''; }
   else if(cur.type==='joint'){ const j=cur.j; capEl.n.textContent=`MỐI ${j.n} / ${NJ}`; capEl.l1.textContent=j.l1; capEl.l2.textContent=j.l2;
     if(t-cur.t0>TMOVE*0.6){ ring.visible=ring2.visible=true; ring.position.copy(j.e.pos); ring2.position.copy(j.e.pos); ring.lookAt(cam.position); ring2.lookAt(cam.position);
       const s=live?1+0.18*Math.sin(t*7):1.1; ring.scale.setScalar(s);
       const v=j.e.pos.clone().project(cam); const W2=innerWidth, H2=innerHeight; capEl.tag.hidden=false; capEl.tag.textContent=j.e.label; capEl.tag.style.left=((v.x+1)/2*W2)+'px'; capEl.tag.style.top=((1-v.y)/2*H2)+'px'; }
     ghostBetween(cam.position, j.e.pos, j.e.mod); }
-  else if(cur.type==='end'){ capEl.title.hidden=false; capEl.title.innerHTML=`<b>Xong phần hàn</b><span>Tiếp theo: lắp bánh xích, nạp firmware</span>`; capEl.n.textContent=''; capEl.l1.textContent=`Tổng cộng ${NJ} mối hàn.`; capEl.l2.textContent='Soát lại: không mối trần nào chạm khung đồng, mọi mối bọc co nhiệt.'; }
+  else if(cur.type==='end'){ capEl.title.hidden=false; capEl.title.innerHTML=`<b>Xong phần hàn</b><span>Tiếp theo: lắp bánh xích, nạp firmware</span>`; capEl.n.textContent=''; capEl.l1.textContent=`Tổng cộng ${NJ} mối nối.`; capEl.l2.textContent='Soát lại: không mối trần nào chạm khung đồng, mọi mối bọc co nhiệt.'; }
   return cur; }
 function frameKey(t){ let cur=EV[0]; for(const ev of EV){ if(ev.t0<=t) cur=ev; else break; } const lt=t-cur.t0;
   if((cur.type==='joint'||cur.type==='chapter') && lt>1.25) return cur.type+cur.t0; return null; }
