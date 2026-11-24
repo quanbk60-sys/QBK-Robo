@@ -22,7 +22,6 @@
 #include "esp_lvgl_port.h"
 #include "esp_camera.h"
 
-static const char* TAG = "QBK-TEST";
 
 // ---- Chân (giống firmware chính) ----
 #define PIN_LCD_CLK 21
@@ -131,7 +130,7 @@ static int tof_read(void) {
     for (int i = 0; i < 30; i++) {
         uint8_t s = 0;
         if (!tof_r8(0x04F, &s)) return -1;
-        if ((s & 7) == 4) { uint8_t mm = 0; tof_r8(0x062, &mm); tof_w8(0x015, 7); return mm; }
+        if ((s & 7) == 4) { uint8_t mm = 0, st = 0; tof_r8(0x062, &mm); tof_r8(0x04D, &st); tof_w8(0x015, 7); return ((st >> 4) || mm >= 200) ? 999 : mm; }
         vTaskDelay(pdMS_TO_TICKS(5));
     }
     return -1;
@@ -206,7 +205,7 @@ static void motors_init(void) {
         ledc_channel_config_t c = {.gpio_num = pins[i], .speed_mode = LEDC_LOW_SPEED_MODE, .channel = LEDC_CHANNEL_2 + i, .timer_sel = LEDC_TIMER_2, .duty = 0};
         ledc_channel_config(&c);
     }
-    // IR phát: sóng mang 38 kHz trên GPIO48, tắt khi không dùng
+    // IR phát: sóng mang 38 kHz trên GPIO20, tắt khi không dùng
     ledc_timer_config_t t3 = {.speed_mode = LEDC_LOW_SPEED_MODE, .duty_resolution = LEDC_TIMER_8_BIT, .timer_num = LEDC_TIMER_3, .freq_hz = 38000, .clk_cfg = LEDC_AUTO_CLK};
     ledc_timer_config(&t3);
     ledc_channel_config_t ir = {.gpio_num = PIN_IR_TX, .speed_mode = LEDC_LOW_SPEED_MODE, .channel = LEDC_CHANNEL_6, .timer_sel = LEDC_TIMER_3, .duty = 0};
@@ -290,7 +289,7 @@ void app_main(void) {
 
         char bar[21]; memset(bar, '|', g_mic_level); bar[g_mic_level] = 0;
         char tof[16], sht[24];
-        if (g_tof_mm >= 0) snprintf(tof, sizeof(tof), "%d mm", g_tof_mm); else strcpy(tof, g_tof_ok ? "loi doc" : "KHONG THAY");
+        if (g_tof_mm == 999) strcpy(tof, "khong co vat"); else if (g_tof_mm >= 0) snprintf(tof, sizeof(tof), "%d mm", g_tof_mm); else strcpy(tof, g_tof_ok ? "loi doc" : "KHONG THAY");
         if (!isnan(g_temp)) snprintf(sht, sizeof(sht), "%.1fC %.0f%%", g_temp, g_hum); else strcpy(sht, g_sht_ok ? "loi doc" : "KHONG THAY");
         char text[300];
         snprintf(text, sizeof(text),

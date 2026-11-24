@@ -139,7 +139,7 @@ private:
             // Không lao về phía vật cản
             if (l > 0 && r > 0) {
                 int mm = self->sensors_.ReadDistanceMm();
-                if (mm > 0 && mm < OBSTACLE_STOP_MM + 40) { l = -l; r = -r; }
+                if (mm >= 0 && mm < OBSTACLE_STOP_MM + 40) { l = -l; r = -r; }
             }
             self->motors_.Set(l, r);
             if (esp_timer_get_time() >= next_face) {

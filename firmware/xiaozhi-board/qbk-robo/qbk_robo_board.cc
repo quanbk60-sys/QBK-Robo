@@ -129,7 +129,7 @@ private:
                 bool stop = esp_timer_get_time() >= until;
                 if (!stop && self->moving_forward_.load() && self->sensors_.tof_ok()) {
                     int mm = self->sensors_.ReadDistanceMm();
-                    if (mm > 0 && mm < OBSTACLE_STOP_MM) {
+                    if (mm >= 0 && mm < OBSTACLE_STOP_MM) {
                         ESP_LOGW(TAG, "Vat can %d mm, dung lai", mm);
                         stop = true;
                     }
@@ -165,9 +165,10 @@ private:
                 std::string dir = p["direction"].value<std::string>();
                 int ms = p["duration_ms"].value<int>();
                 int sp = p["speed"].value<int>();
+                if (fun_.busy()) fun_.Stop();            // đang nhảy thì dừng nhảy trước
                 if (dir == "forward") {
                     int mm = sensors_.ReadDistanceMm();
-                    if (mm > 0 && mm < OBSTACLE_STOP_MM) return std::string("{\"moved\":false,\"reason\":\"vat can phia truoc\",\"distance_mm\":") + std::to_string(mm) + "}";
+                    if (mm >= 0 && mm < OBSTACLE_STOP_MM) return std::string("{\"moved\":false,\"reason\":\"vat can phia truoc\",\"distance_mm\":") + std::to_string(mm) + "}";
                     StartMove(sp, sp, ms, true);
                 } else if (dir == "backward") {
                     StartMove(-sp, -sp, ms, false);
@@ -246,7 +247,8 @@ private:
             [this](const PropertyList&) -> ToolResult {
                 int mm = sensors_.ReadDistanceMm();
                 if (mm < 0) return std::unexpected(std::string("Không đọc được cảm biến khoảng cách"));
-                return std::string("{\"distance_mm\":") + std::to_string(mm) + "}";
+                if (mm == TOF_NO_TARGET) return std::string("{\"obstacle\":false,\"note\":\"khong co vat nao trong khoang 20 cm phia truoc\"}");
+                return std::string("{\"obstacle\":true,\"distance_mm\":") + std::to_string(mm) + "}";
             });
 
         mcp.AddTool("self.room.get_climate", "Đọc nhiệt độ (°C) và độ ẩm (%) trong phòng từ cảm biến SHT31 của robot.", PropertyList(),

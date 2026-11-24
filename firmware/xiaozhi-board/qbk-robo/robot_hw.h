@@ -91,7 +91,7 @@ public:
     bool tof_ok() const { return tof_ok_; }
     bool sht_ok() const { return sht_ok_; }
 
-    // Khoảng cách mm (0..255). -1 nếu lỗi.
+    // Khoảng cách mm (0..200). TOF_NO_TARGET nếu không có vật trong tầm đo. -1 nếu lỗi đọc.
     int ReadDistanceMm() {
         if (!tof_ok_) return -1;
         Lock l(lock_);
@@ -100,9 +100,11 @@ public:
             uint8_t s = 0;
             if (!R8(0x04F, &s)) return -1;               // RESULT_INTERRUPT_STATUS_GPIO
             if ((s & 0x07) == 0x04) {
-                uint8_t mm = 0;
+                uint8_t mm = 0, st = 0;
                 R8(0x062, &mm);                          // RESULT_RANGE_VAL
+                R8(0x04D, &st);                          // RESULT_RANGE_STATUS, 4 bit cao = mã lỗi
                 W8(0x015, 0x07);                         // clear interrupts
+                if ((st >> 4) != 0 || mm >= 200) return TOF_NO_TARGET;   // không có vật / ngoài tầm
                 return mm;
             }
             vTaskDelay(pdMS_TO_TICKS(5));

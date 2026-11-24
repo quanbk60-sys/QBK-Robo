@@ -75,6 +75,7 @@
 #define MOTOR_R_INVERT false      // đảo nếu motor phải quay ngược
 #define MOTOR_PWM_HZ   1000
 #define OBSTACLE_STOP_MM 80       // đang tiến mà vật cản gần hơn thì dừng
+#define TOF_NO_TARGET    999      // giá trị trả về khi không có vật trong tầm đo (~20 cm)
 
 // ---------- IR điều hòa ----------
 #define IR_RX_GPIO GPIO_NUM_0
