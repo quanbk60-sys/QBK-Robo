@@ -2,7 +2,7 @@
 #define _BOARD_CONFIG_H_
 
 // QBK-Robo: ESP32-S3 N16R8 + camera OV3660, khung đồng, 2 bánh xích N20.
-// Bảng chân theo hồ sơ dự án (mục 4.3), có đổi: MX1508 IN3 = GPIO19, IN4 = GPIO48, IR phát = GPIO20.
+// Bảng chân theo hồ sơ dự án (mục 4.3): MX1508 IN3 = GPIO19, IN4 = GPIO48, IR phát = GPIO20.
 // GPIO20 (USB D+) bị kéo lên mức cao lúc khởi động nên dùng cho IR phát (vô hại), không dùng cho motor.
 
 #include <driver/gpio.h>
