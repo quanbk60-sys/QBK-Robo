@@ -72,7 +72,9 @@ ol.steps b{font-family:var(--f-display);font-size:17px}
   <h2><span class="n">02</span>Nguồn</h2>
   <p class="lead">Giữ mạch sạc combo như cũ cho ESP32, ampli, MX1508. 4 servo lúc khởi động kéo tới 2–3 A, nên có mạch tăng áp 5V riêng lấy thẳng từ pin. Công tắc 2 cực tắt cả 2 nhánh cùng lúc.</p>
   <div class="fig"><svg id="figPower" viewBox="0 0 1180 360" width="1180" height="360" role="img" aria-label="Sơ đồ nguồn"></svg></div>
-  <div class="note warn"><b>Nhớ.</b> Chỉnh biến trở mạch tăng áp servo ra 5,1–5,3 V trước khi cắm servo. GND của mạch tăng áp nối chung GND của ESP32, không thì servo giật lung tung. Tụ 1000 µF sát cọc V+ của PCA9685, tụ 470 µF sát chân + của MX1508 (như bản cũ).</div>
+  <div class="note warn"><b>Nhớ.</b> Chỉnh biến trở mạch tăng áp servo ra 5,1–5,3 V trước khi cắm servo. GND của mạch tăng áp nối chung GND của ESP32, không thì servo giật lung tung. Tụ 1000 µF sát cọc V+ của PCA9685. 2 tụ 470 µF như bản cũ: 1 sát chân + − của MX1508, 1 sát chân VIN GND của ampli.</div>
+  <div class="note warn"><b>Nhánh servo chạy dòng lớn.</b> Lúc 4 servo cùng chạy, dây từ pin vào mạch tăng áp chịu tới 4–5 A. Công tắc phải là loại gạt 6 chân chịu từ 5 A trở lên, không dùng công tắc trượt nhỏ (chỉ chịu 0,5 A). Dây pin → công tắc → tăng áp → PCA9685 dùng 20AWG. Mạch tăng áp phải ghi rõ ra được 3 A khi ngõ vào là 1 cell 3,7 V. Mạch XL6009, MT3608 không đủ.</div>
+  <div class="note"><b>Đèn Edison lấy 5V, không lấy 3V3 của board.</b> Mạch ổn áp 3V3 trên board đã gánh ESP32, camera, WiFi, màn và các cảm biến. Đèn ghi 3V thì nối 5V qua 1 trở 100 Ω cho mỗi đèn. Đèn ghi 5V thì nối thẳng.</div>
 </section>
 
 <section id="chan">
@@ -86,7 +88,7 @@ ol.steps b{font-family:var(--f-display);font-size:17px}
     <thead><tr><th>PCA9685 kênh</th><th>Servo</th><th>Loại</th><th>Góc dùng</th></tr></thead>
     <tbody id="servoRows"></tbody>
   </table></div>
-  <div class="note"><b>Địa chỉ I2C.</b> PCA9685 0x40, SHT31 0x44, TOF050C 0x29: không trùng nhau. Không hàn cầu địa chỉ A0–A5 trên PCA9685. Dây cáp servo 3 chân cắm thẳng vào hàng chân PCA9685: nâu/đen = GND, đỏ = V+, cam/vàng = tín hiệu.</div>
+  <div class="note"><b>Địa chỉ I2C.</b> PCA9685 0x40, SHT31 0x44, TOF050C 0x29: không trùng nhau. Không hàn cầu địa chỉ A0–A5 trên PCA9685. <b>Chân VCC của PCA9685 nối 3V3, tuyệt đối không nối 5V-S</b>: VCC là mức điện trở kéo lên của SDA, SCL, nối 5V sẽ hỏng chân GPIO38, 39. Dây cáp servo 3 chân cắm thẳng vào hàng chân PCA9685: nâu/đen = GND, đỏ = V+, cam/vàng = tín hiệu.</div>
 </section>
 </div>
 
@@ -108,13 +110,13 @@ const MODS=[
  {side:'L',t:'TFT 1.8" ST7735 (ngực)',c:'#b8262b',pins:[['LED','3V3'],['SCK','J3:21','purple'],['SDA','J3:47','purple'],['A0','J1:14','purple'],['RESET','J1:RST','white'],['CS','GND'],['GND','GND'],['VCC','3V3']]},
  {side:'L',t:'Nút chạm TTP223 (nắp trên)',c:'#c42a2e',pins:[['I/O','J1:3','white'],['VCC','3V3'],['GND','GND']]},
  {side:'L',t:'Camera OV3660 (mắt trái)',c:'#141518',pins:[['FPC','khe camera trên board']]},
- {side:'L',t:'PCA9685 · ngõ ra servo (sàn)',c:'#0f6b5e',pins:[['V+','5V-S'],['GND','GND'],['CH0','tay trái · SG90'],['CH1','tay phải · SG90'],['CH2','đầu xoay · MG90S'],['CH3','đầu gật · MG90S']]},
- {side:'L',t:'2 đèn Edison (lưng)',c:'#7a5a1e',pins:[['+','3V3 hoặc 5V theo đèn'],['−','GND']]},
+ {side:'L',t:'PCA9685 · ngõ ra servo (sàn)',c:'#0f6b5e',pins:[['V+ (cọc xanh)','5V-S'],['− (cọc xanh)','GND'],['CH0','tay trái · SG90'],['CH1','tay phải · SG90'],['CH2','đầu xoay · MG90S'],['CH3','đầu gật · MG90S']]},
+ {side:'L',t:'2 đèn Edison (lưng)',c:'#7a5a1e',pins:[['+','5V (qua trở nếu đèn 3V)'],['−','GND']]},
  {side:'R',t:'Mic INMP441 (nắp trên)',c:'#141518',pins:[['SCK','J3:2','blue'],['WS','J3:42','blue'],['SD','J3:41','blue'],['L/R','GND'],['VDD','3V3'],['GND','GND']]},
- {side:'R',t:'Ampli MAX98357A (sau ngực)',c:'#4b2a8a',pins:[['BCLK','J3:2','blue'],['LRC','J3:42','blue'],['DIN','J3:40','blue'],['VIN','5V'],['GND','GND']]},
- {side:'R',t:'I2C: TOF050C · SHT31 · PCA9685',c:'#1d3f8a',pins:[['SDA','J3:38','yellow'],['SCL','J3:39','green'],['VCC','3V3'],['GND','GND']]},
+ {side:'R',t:'Ampli MAX98357A (sau ngực)',c:'#4b2a8a',pins:[['BCLK','J3:2','blue'],['LRC','J3:42','blue'],['DIN','J3:40','blue'],['VIN (tụ 470µF)','5V'],['GND','GND']]},
+ {side:'R',t:'I2C: TOF050C · SHT31 · PCA9685',c:'#1d3f8a',pins:[['SDA','J3:38','yellow'],['SCL','J3:39','green'],['VCC (cả 3 module)','3V3'],['GND','GND']]},
  {side:'R',t:'MX1508 · 2 motor N20 (sàn dưới)',c:'#8a5a2b',pins:[['IN1','J3:45','brown'],['IN2','J1:46','brown'],['IN3','J3:19','brown'],['IN4','J3:48','brown'],['+ (tụ 470µF)','5V'],['−','GND'],['MOTOR-A','N20 xích trái'],['MOTOR-B','N20 xích phải']]},
- {side:'R',t:'Đo pin (cầu chia 100k/100k)',c:'#c8a066',pins:[['điểm giữa','J3:1','white']]},
+ {side:'R',t:'Đo pin (cầu chia 100k/100k)',c:'#c8a066',pins:[['đầu trên','pin +'],['điểm giữa','J3:1','white'],['đầu dưới','GND']]},
 ];
 (function(){
   const s=document.getElementById('figWire');
@@ -132,7 +134,7 @@ const MODS=[
   T(s,EX0-4,top-50,'J1',{fs:12,fw:700,mono:true,a:'middle'}); T(s,EX1+4,top-50,'J3',{fs:12,fw:700,mono:true,a:'middle'});
   T(s,(EX0+EX1)/2,top+espH+16,'chữ xanh nhạt = chân camera, không dùng',{fs:11,a:'middle',fill:'var(--muted)'});
   T(s,(EX0+EX1)/2,top+espH+33,'GPIO0, GPIO20 = trống (đã bỏ IR)',{fs:11,a:'middle',fill:'var(--muted)'});
-  const badge=(x,y,txt,right)=>{ const col={'3V3':'#f08a24','5V':'#d83a2e','5V-S':'#a3166b','GND':'#2a2a2a'}[txt]; const w=Math.max(38,txt.length*6.6+14);
+  const badge=(x,y,txt,right)=>{ const col={'3V3':'#f08a24','5V':'#d83a2e','5V-S':'#a3166b','GND':'#2a2a2a','pin +':'#6b4a1a'}[txt]; const w=Math.max(38,txt.length*6.6+14);
     const bx=right?x+10:x-10-w; R(s,bx,y-9,w,18,{fill:col||'var(--surface-2)',stroke:col||'var(--cardline)',rx:9,sw:1}); T(s,bx+w/2,y,txt,{fs:10.5,fw:700,a:'middle',mono:!!col,fill:col?'#fff':'var(--ink)'}); };
   const wires=[];
   let yL=top-50, yR=top-50;
@@ -164,22 +166,23 @@ const MODS=[
   const L=(x,y,t,o={})=>T(s,x,y,t,Object.assign({fs:10.5,fill:'var(--muted)'},o));
   B(20,135,150,70,'2 × 18650','song song · 3,7 V');
   B(230,40,170,70,'Mạch sạc combo','sạc USB-C · ra 5V');
-  B(230,230,170,70,'Công tắc 2 cực','DPDT 6 chân');
+  B(230,230,170,70,'Công tắc 2 cực','gạt DPDT 6 chân · ≥ 5 A');
   B(480,40,180,70,'Thanh nguồn 5V','sau công tắc');
-  B(480,230,180,70,'Tăng áp 5V-S','≥ 3 A · chỉnh 5,2 V','var(--accent-soft)');
-  B(740,10,190,50,'ESP32 (chân 5V)','3V3 → TFT, mic, I2C, chạm');
-  B(740,70,190,40,'Ampli MAX98357A','');
-  B(740,120,190,50,'MX1508 + tụ 470 µF','→ 2 motor N20');
+  B(480,230,180,70,'Tăng áp 5V-S','3 A khi vào 3,7 V','var(--accent-soft)');
+  B(740,4,190,46,'ESP32 (chân 5V)','3V3 → TFT, mic, I2C, chạm');
+  B(740,58,190,36,'Ampli + tụ 470 µF','');
+  B(740,102,190,46,'MX1508 + tụ 470 µF','→ 2 motor N20');
+  B(740,156,190,46,'2 đèn Edison','đèn 3V: thêm trở 100 Ω');
+  B(20,262,150,50,'Cầu chia 100k/100k','điểm giữa → GPIO1');
   B(740,230,190,70,'PCA9685 V+','+ tụ 1000 µF','var(--accent-soft)');
   B(1000,230,160,70,'4 servo','2 tay · đầu xoay · gật');
-  B(1000,10,160,50,'2 đèn Edison','hoặc 5V, theo đèn');
   A('M170 155 C200 155,200 75,228 75'); L(196,100,'B+ B−',{a:'end'});
-  A('M170 185 C200 185,200 280,228 280'); L(200,300,'pin + vào cực 2',{a:'end'});
+  A('M170 185 C200 185,200 280,228 280'); L(232,318,'pin + vào cực 2');
   A('M400 75 C440 75,440 175,320 175 C300 175,300 205,300 228'); L(384,194,'5V vào cực 1',{a:'middle'}); L(452,150,'cực 1 ra'); L(408,300,'cực 2 ra');
   A('M400 250 C440 250,440 75,478 75'); A('M400 280 L478 265');
-  A('M660 60 L738 35'); A('M660 75 L738 90'); A('M660 90 L738 140');
+  A('M660 55 L738 27'); A('M660 70 L738 76'); A('M660 85 L738 125'); A('M660 100 L738 179');
+  A('M95 205 L95 260'); L(102,232,'pin +');
   A('M660 265 L738 265'); A('M930 265 L998 265');
-  A('M930 35 L998 35'); L(964,24,'3V3',{a:'middle'});
   T(s,590,340,'Mọi GND nối chung một điểm trên thanh nguồn · Nạp code bằng máy tính thì để công tắc TẮT',{fs:12,fw:700,a:'middle',fill:'var(--warn)'});
 })();
 
@@ -187,12 +190,12 @@ const MODS=[
 const PINS=[
  ['TFT 1.8" ST7735','SCK / SDA / A0','GPIO21 / GPIO47 / GPIO14','purple'],['TFT 1.8" ST7735','RESET','EN','white'],['TFT 1.8" ST7735','CS · GND','GND','black'],['TFT 1.8" ST7735','VCC · LED','3V3','orange'],
  ['Mic INMP441','SCK / WS / SD','GPIO2 / GPIO42 / GPIO41','blue'],['Mic INMP441','L/R · GND','GND','black'],['Mic INMP441','VDD','3V3','orange'],
- ['Ampli MAX98357A','BCLK / LRC','GPIO2 / GPIO42 (chung mic)','blue'],['Ampli MAX98357A','DIN','GPIO40','blue'],['Ampli MAX98357A','VIN','5V','red'],
- ['TOF050C · SHT31 · PCA9685','SDA / SCL','GPIO38 / GPIO39','yellow'],['TOF050C · SHT31 · PCA9685','VCC','3V3','orange'],['PCA9685','V+ (cọc xanh)','5V-S (tăng áp servo) + tụ 1000 µF','red'],
+ ['Ampli MAX98357A','BCLK / LRC','GPIO2 / GPIO42 (chung mic)','blue'],['Ampli MAX98357A','DIN','GPIO40','blue'],['Ampli MAX98357A','VIN','5V + tụ 470 µF sát chân VIN–GND','red'],
+ ['TOF050C · SHT31 · PCA9685','SDA / SCL','GPIO38 / GPIO39','yellow'],['TOF050C · SHT31 · PCA9685','VCC','3V3','orange'],['PCA9685','V+ / − (cọc xanh)','5V-S / GND của tăng áp servo + tụ 1000 µF','red'],
  ['MX1508','IN1 / IN2','GPIO45 / GPIO46','brown'],['MX1508','IN3 / IN4','GPIO19 / GPIO48','brown'],['MX1508','+ / −','5V (tụ 470 µF) / GND','red'],['MX1508','MOTOR-A / MOTOR-B','N20 xích trái / N20 xích phải','grey'],
  ['Nút chạm TTP223','I/O','GPIO3','white'],
- ['Đo pin','điểm giữa cầu 100k/100k','GPIO1','white'],['Camera OV3660','cáp dẹt','14 chân camera của board','grey'],
- ['2 đèn Edison','+ / −','3V3 hoặc 5V theo đèn / GND','orange'],['ESP32-S3','5V · GND','thanh nguồn 5V','red'],
+ ['Đo pin','đầu trên / điểm giữa / đầu dưới cầu 100k/100k','pin + / GPIO1 / GND','white'],['Camera OV3660','cáp dẹt','14 chân camera của board','grey'],
+ ['2 đèn Edison','+ / −','5V (đèn 3V: qua trở 100 Ω) / GND','red'],['Công tắc 2 cực','cực 1 / cực 2','5V ra mạch sạc → thanh 5V / pin + → tăng áp 5V-S','red'],['ESP32-S3','5V · GND','thanh nguồn 5V','red'],
 ];
 document.getElementById('pinRows').innerHTML=PINS.map(r=>`<tr><td>${r[0]}</td><td class="m">${r[1]}</td><td class="m">${r[2]}</td><td><span class="sw" style="background:${WC[r[3]]}"></span>${CN[r[3]]}</td></tr>`).join('');
 const SERVOS=[['CH0','Tay trái','180° SG90','0–120°'],['CH1','Tay phải','180° SG90','0–120° (đảo chiều trong code)'],['CH2','Đầu xoay ngang','180° MG90S','10–170° (±80°)'],['CH3','Đầu gật','180° MG90S','60–120° (±30°)']];
