@@ -1,0 +1,200 @@
+<title>Wall-E Xích N20</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: single reading column (max 1180) with wide diagrams in their own scroll boxes */
+:root{
+  --bg:#f1efe9; --surface:#ffffff; --surface-2:#f7f5f0; --ink:#1b2128; --muted:#5d6670; --line:#d9d5cc;
+  --accent:#c9741c; --accent-soft:#fbe9d3; --card:#ffffff; --cardline:#3a4048; --warn:#b4541f;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171b; --surface:#1b2026; --surface-2:#20262d; --ink:#e7e9eb; --muted:#9ba5ae; --line:#2e353d;
+  --accent:#f0a24a; --accent-soft:#3a2b19; --card:#232a32; --cardline:#8b96a1; --warn:#f08a5a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171b; --surface:#1b2026; --surface-2:#20262d; --ink:#e7e9eb; --muted:#9ba5ae; --line:#2e353d;
+  --accent:#f0a24a; --accent-soft:#3a2b19; --card:#232a32; --cardline:#8b96a1; --warn:#f08a5a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:.01em}
+header.top{display:grid;gap:6px;margin-bottom:22px}
+header.top .eyebrow{font:600 12px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+header.top h1{font-size:44px;line-height:1.05}
+header.top p{margin:0;color:var(--muted);max-width:72ch}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}
+nav.toc a{font:600 13px var(--f-body);color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:999px}
+nav.toc a:hover,nav.toc a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+section{margin-top:40px;display:grid;gap:12px}
+section>h2{font-size:30px;display:flex;gap:12px;align-items:baseline}
+section>h2 .n{font:700 14px var(--f-mono);color:var(--accent)}
+section>p,section li{max-width:76ch}
+.lead{color:var(--muted);margin:0}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.fig svg{display:block}
+.cap{font-size:13px;color:var(--muted);margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:14px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.m{font-family:var(--f-mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:22px;height:8px;border-radius:4px;margin-right:7px;vertical-align:1px;border:1px solid rgba(0,0,0,.35)}
+.pill{display:inline-block;font:600 11.5px var(--f-body);padding:1px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.pill.must{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.note{border-left:3px solid var(--accent);background:var(--surface);padding:12px 14px;border-radius:0 8px 8px 0;max-width:80ch}
+.note.warn{border-left-color:var(--warn)}
+.note b{color:var(--accent)} .note.warn b{color:var(--warn)}
+ol.steps{margin:0;padding-left:24px;display:grid;gap:8px}
+ol.steps li::marker{font-family:var(--f-mono);color:var(--accent)}
+ol.steps b{font-family:var(--f-display);font-size:17px}
+@media (max-width:600px){header.top h1{font-size:32px} section>h2{font-size:24px}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Vỏ Wall-E · bánh xích N20 · bỏ IR</div>
+  <h1>QBK-Robo Wall-E · sơ đồ mạch</h1>
+  <p>Đồ cũ của anh lắp vào vỏ Wall-E. Bánh xích chạy bằng bộ xích N20 trục dài qua MX1508, giữ nguyên chân GPIO45, 46, 19, 48. Bỏ bộ IR. Thêm 4 servo cho 2 tay, đầu xoay ngang và đầu gật, điều khiển qua mạch PCA9685 dùng chung 2 dây I2C với TOF050C và SHT31. Board 20 chân của shop, cắm theo chữ in cạnh chân.</p>
+</header>
+
+<section id="day">
+  <h2><span class="n">01</span>Sơ đồ nối dây</h2>
+  <p class="lead">Dây tín hiệu vẽ thành đường màu. Chân nguồn ghi nhãn: 3V3, 5V (nguồn mạch, sau công tắc), 5V-S (nguồn servo riêng), GND. Mọi GND nối chung.</p>
+  <div class="fig"><svg id="figWire" role="img" aria-label="Sơ đồ nối dây"></svg></div>
+  <div class="note"><b>Board chỉ có 1 chân 3V3, 1 chân 5V, 1 chân GND.</b> Các dây cùng loại hàn chụm thành 1 dây rồi mới cắm Dupont vào chân. Dây SCK, WS của mic hàn chụm với dây BCLK, LRC của ampli (GPIO2, GPIO42). GPIO0 và GPIO20 để trống: không nối servo vào 2 chân này vì lúc bật nguồn chúng lên mức cao làm servo giật.</div>
+</section>
+
+<section id="nguon">
+  <h2><span class="n">02</span>Nguồn</h2>
+  <p class="lead">Giữ mạch sạc combo như cũ cho ESP32, ampli, MX1508. 4 servo lúc khởi động kéo tới 2–3 A, nên có mạch tăng áp 5V riêng lấy thẳng từ pin. Công tắc 2 cực tắt cả 2 nhánh cùng lúc.</p>
+  <div class="fig"><svg id="figPower" viewBox="0 0 1180 360" width="1180" height="360" role="img" aria-label="Sơ đồ nguồn"></svg></div>
+  <div class="note warn"><b>Nhớ.</b> Chỉnh biến trở mạch tăng áp servo ra 5,1–5,3 V trước khi cắm servo. GND của mạch tăng áp nối chung GND của ESP32, không thì servo giật lung tung. Tụ 1000 µF sát cọc V+ của PCA9685, tụ 470 µF sát chân + của MX1508 (như bản cũ).</div>
+</section>
+
+<section id="chan">
+  <h2><span class="n">03</span>Bảng chân</h2>
+  <p class="lead">So với bản khung đồng: bỏ IR thu (GPIO0) và IR phát (GPIO20), thêm PCA9685 vào bus I2C. Các chân còn lại giữ nguyên.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Module</th><th>Chân module</th><th>Nối tới</th><th>Dây</th></tr></thead>
+    <tbody id="pinRows"></tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>PCA9685 kênh</th><th>Servo</th><th>Loại</th><th>Góc dùng</th></tr></thead>
+    <tbody id="servoRows"></tbody>
+  </table></div>
+  <div class="note"><b>Địa chỉ I2C.</b> PCA9685 0x40, SHT31 0x44, TOF050C 0x29: không trùng nhau. Không hàn cầu địa chỉ A0–A5 trên PCA9685. Dây cáp servo 3 chân cắm thẳng vào hàng chân PCA9685: nâu/đen = GND, đỏ = V+, cam/vàng = tín hiệu.</div>
+</section>
+</div>
+
+<script>
+const WC={red:'#d83a2e',orange:'#f08a24',black:'#2a2a2a',yellow:'#e9bd12',green:'#2fa84f',purple:'#8a4fd0',blue:'#2f6fdc',brown:'#8a5a2b',white:'#e9e9e9',grey:'#8a8f96',pink:'#e04d8f',teal:'#169c94'};
+const CN={red:'Đỏ',orange:'Cam',black:'Đen',yellow:'Vàng',green:'Xanh lá',purple:'Tím',blue:'Xanh dương',brown:'Nâu',white:'Trắng',grey:'Xám',pink:'Hồng',teal:'Xanh ngọc'};
+const NS='http://www.w3.org/2000/svg';
+const el=(p,tag,a={},txt)=>{const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;p.appendChild(e);return e;};
+const T=(p,x,y,s,o={})=>el(p,'text',{x,y,'font-family':o.mono?'JetBrains Mono, monospace':'Be Vietnam Pro, sans-serif','font-size':o.fs||12,'font-weight':o.fw||500,fill:o.fill||'var(--ink)','text-anchor':o.a||'start','dominant-baseline':'middle'},s);
+const R=(p,x,y,w,h,o={})=>el(p,'rect',{x,y,width:w,height:h,rx:o.rx??5,fill:o.fill||'var(--card)',stroke:o.stroke||'var(--cardline)','stroke-width':o.sw||1.4,'stroke-dasharray':o.dash||''});
+
+/* ---------- 01 Sơ đồ dây ---------- */
+const J1=['3V3','RST','4','5','6','7','15','16','17','18','8','3','46','9','10','11','12','13','14','5V'];
+const J3=['TX','RX','1','2','42','41','40','39','38','37','36','35','0','45','48','47','21','20','19','G'];
+const CAM=new Set(['4','5','6','7','15','16','17','18','8','9','10','11','12','13']);
+const FREE=new Set(['0','20']);
+// module: side, title, color, pins [name, target, color]   target: 'J1:x' 'J3:x' hoặc nhãn
+const MODS=[
+ {side:'L',t:'TFT 1.8" ST7735 (ngực)',c:'#b8262b',pins:[['LED','3V3'],['SCK','J3:21','purple'],['SDA','J3:47','purple'],['A0','J1:14','purple'],['RESET','J1:RST','white'],['CS','GND'],['GND','GND'],['VCC','3V3']]},
+ {side:'L',t:'Nút chạm TTP223 (nắp trên)',c:'#c42a2e',pins:[['I/O','J1:3','white'],['VCC','3V3'],['GND','GND']]},
+ {side:'L',t:'Camera OV3660 (mắt trái)',c:'#141518',pins:[['FPC','khe camera trên board']]},
+ {side:'L',t:'PCA9685 · ngõ ra servo (sàn)',c:'#0f6b5e',pins:[['V+','5V-S'],['GND','GND'],['CH0','tay trái · SG90'],['CH1','tay phải · SG90'],['CH2','đầu xoay · MG90S'],['CH3','đầu gật · MG90S']]},
+ {side:'L',t:'2 đèn Edison (lưng)',c:'#7a5a1e',pins:[['+','3V3 hoặc 5V theo đèn'],['−','GND']]},
+ {side:'R',t:'Mic INMP441 (nắp trên)',c:'#141518',pins:[['SCK','J3:2','blue'],['WS','J3:42','blue'],['SD','J3:41','blue'],['L/R','GND'],['VDD','3V3'],['GND','GND']]},
+ {side:'R',t:'Ampli MAX98357A (sau ngực)',c:'#4b2a8a',pins:[['BCLK','J3:2','blue'],['LRC','J3:42','blue'],['DIN','J3:40','blue'],['VIN','5V'],['GND','GND']]},
+ {side:'R',t:'I2C: TOF050C · SHT31 · PCA9685',c:'#1d3f8a',pins:[['SDA','J3:38','yellow'],['SCL','J3:39','green'],['VCC','3V3'],['GND','GND']]},
+ {side:'R',t:'MX1508 · 2 motor N20 (sàn dưới)',c:'#8a5a2b',pins:[['IN1','J3:45','brown'],['IN2','J1:46','brown'],['IN3','J3:19','brown'],['IN4','J3:48','brown'],['+ (tụ 470µF)','5V'],['−','GND'],['MOTOR-A','N20 xích trái'],['MOTOR-B','N20 xích phải']]},
+ {side:'R',t:'Đo pin (cầu chia 100k/100k)',c:'#c8a066',pins:[['điểm giữa','J3:1','white']]},
+];
+(function(){
+  const s=document.getElementById('figWire');
+  const W=1180, PITCH=22, top=120, EX0=470, EX1=710, MW=210, LX=40, RX=W-40-MW;
+  const espH=J1.length*PITCH+130; let H=Math.max(top+espH+60, 0);
+  R(s,EX0,top-40,EX1-EX0,espH,{fill:'#16181c',stroke:'#16181c',rx:10});
+  R(s,EX0+70,top-28,100,70,{fill:'#c9cdd2',stroke:'#9aa0a6'}); T(s,(EX0+EX1)/2,top-6,'ESP32-S3',{fs:12,fw:700,a:'middle',fill:'#2b2f35'}); T(s,(EX0+EX1)/2,top+10,'N16R8 · OV3660',{fs:10.5,a:'middle',fill:'#2b2f35'});
+  T(s,(EX0+EX1)/2,top+espH-62,'USB  ·  COM',{fs:11,a:'middle',fill:'#bbb',mono:true});
+  T(s,(EX0+EX1)/2,top+espH-48,'nạp code qua cổng COM',{fs:10,a:'middle',fill:'#999'});
+  const py=i=>top+60+i*PITCH;
+  const pinPos={};
+  const pinFill=n=>CAM.has(n)?'#7fb3c9':FREE.has(n)?'#8d939a':'#f2f2f2';
+  J1.forEach((n,i)=>{ const y=py(i), x=EX0; pinPos['J1:'+n]={x,y,side:'L'}; el(s,'circle',{cx:x,cy:y,r:5.5,fill:'#e2c36a',stroke:'#8a6a1a'}); T(s,x+12,y,n==='G'?'GND':n==='RST'?'EN':n,{fs:11,mono:true,fill:pinFill(n),fw:700}); });
+  J3.forEach((n,i)=>{ const y=py(i), x=EX1; pinPos['J3:'+n]={x,y,side:'R'}; el(s,'circle',{cx:x,cy:y,r:5.5,fill:'#e2c36a',stroke:'#8a6a1a'}); T(s,x-12,y,n==='G'?'GND':n==='RST'?'EN':n,{fs:11,mono:true,fill:pinFill(n),fw:700,a:'end'}); if(FREE.has(n)) T(s,x-40,y,'trống',{fs:10,fill:'#8d939a',a:'end'}); });
+  T(s,EX0-4,top-50,'J1',{fs:12,fw:700,mono:true,a:'middle'}); T(s,EX1+4,top-50,'J3',{fs:12,fw:700,mono:true,a:'middle'});
+  T(s,(EX0+EX1)/2,top+espH+16,'chữ xanh nhạt = chân camera, không dùng',{fs:11,a:'middle',fill:'var(--muted)'});
+  T(s,(EX0+EX1)/2,top+espH+33,'GPIO0, GPIO20 = trống (đã bỏ IR)',{fs:11,a:'middle',fill:'var(--muted)'});
+  const badge=(x,y,txt,right)=>{ const col={'3V3':'#f08a24','5V':'#d83a2e','5V-S':'#a3166b','GND':'#2a2a2a'}[txt]; const w=Math.max(38,txt.length*6.6+14);
+    const bx=right?x+10:x-10-w; R(s,bx,y-9,w,18,{fill:col||'var(--surface-2)',stroke:col||'var(--cardline)',rx:9,sw:1}); T(s,bx+w/2,y,txt,{fs:10.5,fw:700,a:'middle',mono:!!col,fill:col?'#fff':'var(--ink)'}); };
+  const wires=[];
+  let yL=top-50, yR=top-50;
+  for(const m of MODS){ const left=m.side==='L'; const x=left?LX:RX; let y=left?yL:yR; const h=34+m.pins.length*20;
+    R(s,x,y,MW,h,{fill:'var(--card)'}); R(s,x,y,MW,22,{fill:m.c,stroke:m.c}); T(s,x+10,y+11,m.t,{fs:11.5,fw:700,fill:'#fff'});
+    m.pins.forEach((p,i)=>{ const yy=y+38+i*20; const px=left?x+MW:x; el(s,'circle',{cx:px,cy:yy,r:4.5,fill:'#e9c35c',stroke:'#8a6a1a'});
+      if(p[1].startsWith('J')){ T(s,left?px-10:px+10,yy,p[0],{fs:11,mono:true,a:left?'end':'start',fw:700}); wires.push({x:px,y:yy,t:p[1],c:p[2],left}); }
+      else { T(s,left?x+10:x+MW-10,yy,p[0],{fs:11,mono:true,a:left?'start':'end',fw:700}); badge(px,yy,p[1],!left); } });
+    if(left) yL+=h+16; else yR+=h+16; }
+  H=Math.max(H,yL,yR)+30; s.setAttribute('viewBox',`0 0 ${W} ${H}`); s.setAttribute('width',W); s.setAttribute('height',H);
+  const nets={}; let cL=0,cR=0,cTop=0;
+  const g=el(s,'g',{}); s.insertBefore(g,s.firstChild);
+  for(const w of wires){ const tp=pinPos[w.t]; if(!tp) continue;
+    const key=w.t+(w.left?'L':'R');
+    if(!nets[key]){ nets[key]={ch: w.left? (LX+MW+24+ (cL++)*14) : (RX-24-(cR++)*14)}; if(tp.side!==(w.left?'L':'R')){ cTop++; nets[key].over={y:top-62-(cTop-1)*10, ch2: tp.side==='L'? EX0-22-(cTop)*8 : EX1+22+(cTop)*8}; } }
+    const n=nets[key]; let d=`M${w.x} ${w.y} H${n.ch}`;
+    if(n.over){ d+=` V${n.over.y} H${n.over.ch2} V${tp.y} H${tp.x}`; } else d+=` V${tp.y} H${tp.x}`;
+    el(g,'path',{d,fill:'none',stroke:'#1b2128','stroke-width':4.2,'stroke-linejoin':'round',opacity:.55});
+    el(g,'path',{d,fill:'none',stroke:WC[w.c],'stroke-width':2.4,'stroke-linejoin':'round'});
+  }
+})();
+
+/* ---------- 02 Nguồn ---------- */
+(function(){
+  const s=document.getElementById('figPower');
+  const defs=el(s,'defs'); const mk=el(defs,'marker',{id:'pa',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto'}); el(mk,'path',{d:'M0 0 L10 5 L0 10 z',fill:'var(--cardline)'});
+  const B=(x,y,w,h,t,sub,c)=>{R(s,x,y,w,h,{fill:c||'var(--card)'});T(s,x+w/2,y+h/2-(sub?8:0),t,{fs:13,fw:700,a:'middle'});if(sub)T(s,x+w/2,y+h/2+10,sub,{fs:11,a:'middle',fill:'var(--muted)'});};
+  const A=(d,c)=>el(s,'path',{d,fill:'none',stroke:c||'var(--cardline)','stroke-width':2.4,'marker-end':'url(#pa)'});
+  const L=(x,y,t,o={})=>T(s,x,y,t,Object.assign({fs:10.5,fill:'var(--muted)'},o));
+  B(20,135,150,70,'2 × 18650','song song · 3,7 V');
+  B(230,40,170,70,'Mạch sạc combo','sạc USB-C · ra 5V');
+  B(230,230,170,70,'Công tắc 2 cực','DPDT 6 chân');
+  B(480,40,180,70,'Thanh nguồn 5V','sau công tắc');
+  B(480,230,180,70,'Tăng áp 5V-S','≥ 3 A · chỉnh 5,2 V','var(--accent-soft)');
+  B(740,10,190,50,'ESP32 (chân 5V)','3V3 → TFT, mic, I2C, chạm');
+  B(740,70,190,40,'Ampli MAX98357A','');
+  B(740,120,190,50,'MX1508 + tụ 470 µF','→ 2 motor N20');
+  B(740,230,190,70,'PCA9685 V+','+ tụ 1000 µF','var(--accent-soft)');
+  B(1000,230,160,70,'4 servo','2 tay · đầu xoay · gật');
+  B(1000,10,160,50,'2 đèn Edison','hoặc 5V, theo đèn');
+  A('M170 155 C200 155,200 75,228 75'); L(196,100,'B+ B−',{a:'end'});
+  A('M170 185 C200 185,200 280,228 280'); L(200,300,'pin + vào cực 2',{a:'end'});
+  A('M400 75 C440 75,440 175,320 175 C300 175,300 205,300 228'); L(384,194,'5V vào cực 1',{a:'middle'}); L(452,150,'cực 1 ra'); L(408,300,'cực 2 ra');
+  A('M400 250 C440 250,440 75,478 75'); A('M400 280 L478 265');
+  A('M660 60 L738 35'); A('M660 75 L738 90'); A('M660 90 L738 140');
+  A('M660 265 L738 265'); A('M930 265 L998 265');
+  A('M930 35 L998 35'); L(964,24,'3V3',{a:'middle'});
+  T(s,590,340,'Mọi GND nối chung một điểm trên thanh nguồn · Nạp code bằng máy tính thì để công tắc TẮT',{fs:12,fw:700,a:'middle',fill:'var(--warn)'});
+})();
+
+/* ---------- 03 Bảng chân ---------- */
+const PINS=[
+ ['TFT 1.8" ST7735','SCK / SDA / A0','GPIO21 / GPIO47 / GPIO14','purple'],['TFT 1.8" ST7735','RESET','EN','white'],['TFT 1.8" ST7735','CS · GND','GND','black'],['TFT 1.8" ST7735','VCC · LED','3V3','orange'],
+ ['Mic INMP441','SCK / WS / SD','GPIO2 / GPIO42 / GPIO41','blue'],['Mic INMP441','L/R · GND','GND','black'],['Mic INMP441','VDD','3V3','orange'],
+ ['Ampli MAX98357A','BCLK / LRC','GPIO2 / GPIO42 (chung mic)','blue'],['Ampli MAX98357A','DIN','GPIO40','blue'],['Ampli MAX98357A','VIN','5V','red'],
+ ['TOF050C · SHT31 · PCA9685','SDA / SCL','GPIO38 / GPIO39','yellow'],['TOF050C · SHT31 · PCA9685','VCC','3V3','orange'],['PCA9685','V+ (cọc xanh)','5V-S (tăng áp servo) + tụ 1000 µF','red'],
+ ['MX1508','IN1 / IN2','GPIO45 / GPIO46','brown'],['MX1508','IN3 / IN4','GPIO19 / GPIO48','brown'],['MX1508','+ / −','5V (tụ 470 µF) / GND','red'],['MX1508','MOTOR-A / MOTOR-B','N20 xích trái / N20 xích phải','grey'],
+ ['Nút chạm TTP223','I/O','GPIO3','white'],
+ ['Đo pin','điểm giữa cầu 100k/100k','GPIO1','white'],['Camera OV3660','cáp dẹt','14 chân camera của board','grey'],
+ ['2 đèn Edison','+ / −','3V3 hoặc 5V theo đèn / GND','orange'],['ESP32-S3','5V · GND','thanh nguồn 5V','red'],
+];
+document.getElementById('pinRows').innerHTML=PINS.map(r=>`<tr><td>${r[0]}</td><td class="m">${r[1]}</td><td class="m">${r[2]}</td><td><span class="sw" style="background:${WC[r[3]]}"></span>${CN[r[3]]}</td></tr>`).join('');
+const SERVOS=[['CH0','Tay trái','180° SG90','0–120°'],['CH1','Tay phải','180° SG90','0–120° (đảo chiều trong code)'],['CH2','Đầu xoay ngang','180° MG90S','10–170° (±80°)'],['CH3','Đầu gật','180° MG90S','60–120° (±30°)']];
+document.getElementById('servoRows').innerHTML=SERVOS.map(r=>`<tr><td class="m">${r[0]}</td><td><b>${r[1]}</b></td><td>${r[2]}</td><td class="m">${r[3]}</td></tr>`).join('');
+</script>
