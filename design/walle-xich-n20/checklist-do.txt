@@ -1,0 +1,75 @@
+QBK-ROBO WALL-E · CHECKLIST ĐỒ
+Bản: vỏ Wall-E + bánh xích N20 + 4 servo (2 tay, đầu xoay, đầu gật) · bỏ IR
+Đánh dấu [x] khi xong.
+
+==================================================
+A. ĐỒ ĐÃ CÓ (dùng lại)
+==================================================
+[ ] ESP32-S3 N16R8 + camera OV3660 ............ combo
+[ ] Màn TFT 1.8" ST7735 (đặt ở ngực) .......... combo
+[ ] Mic INMP441 ............................... combo
+[ ] Ampli MAX98357A + loa 3W 4 Ohm ............ combo
+[ ] Cảm biến khoảng cách TOF050C .............. combo
+[ ] Nút chạm TTP223 ........................... combo
+[ ] 2 motor N20 + mạch MX1508 ................. combo
+[ ] Mạch sạc USB-C tăng áp 5V ................. combo
+[ ] 2 đèn Edison .............................. combo
+[ ] Dây Dupont ................................ combo
+[ ] Bộ bánh xích N20 trục dài ................. maybayrc
+[ ] 2 pin 18650 Beston 3300mAh + sạc đôi ...... BESTON
+[ ] Đế pin 2 pin song song
+[ ] Cảm biến nhiệt độ, độ ẩm SHT31-D (mạch tím)
+[ ] Trở 100k .................................. cần 2, có 10 (cầu chia đo pin)
+[ ] Tụ 470 uF 16V ............................. cần 2, có 5 (MX1508, ampli)
+[ ] 2 tấm PCB lỗ 5x7 .......................... đế ESP32 + thanh nguồn
+[ ] Ống co nhiệt, mỏ hàn kèm thiếc, súng keo nến
+
+==================================================
+B. ĐỒ CÒN THIẾU (cần mua)
+==================================================
+[ ] Vỏ Wall-E in 3D + bộ ốc M2, M2.5, M4 ...... 1 bộ  (nếu anh chưa mua)
+[ ] Mạch PCA9685 16 kênh ...................... 1     điều khiển 4 servo
+[ ] Servo SG90 ................................ 2     2 tay
+[ ] Servo MG90S (bánh răng kim loại) .......... 2     đầu xoay, đầu gật
+[ ] Khung pan-tilt cho SG90 ................... 1     lắp ở đỉnh cổ
+[ ] Mạch tăng áp ra 5V 3A ..................... 1     nguồn riêng cho servo
+      -> shop phải ghi rõ ra được 3 A khi đầu vào 3,7 V
+      -> KHÔNG lấy XL6009, MT3608 (không đủ dòng)
+[ ] Công tắc gạt 2 cực 6 chân, chịu >= 5 A .... 1     loại MTS-202, thay công tắc cũ
+[ ] Tụ 1000 uF 16V ............................ 1     sát cọc V+ của PCA9685
+[ ] Trở 100 Ohm ............................... 2     chỉ cần nếu đèn Edison ghi 3V
+[ ] Dây 20AWG đỏ + đen ........................ mỗi màu 1 m   nhánh nguồn servo
+[ ] Dây silicone mềm 26AWG nhiều màu .......... 1-2 m  dây TOF lên đầu qua cổ
+[ ] Cáp FPC camera 24 chân dài 15-20 cm ....... 1     camera ở mắt, board ở thân
+[ ] Tấm mica 3 mm cỡ nhỏ ...................... 1     tấm đỡ motor N20 + viền màn 1.8"
+
+Dụng cụ (nếu chưa có):
+[ ] Đồng hồ VOM ............................... chỉnh tăng áp ra 5,2 V, đo pin
+[ ] Khoan tay mũi 2-3 mm, dao rọc giấy, giũa .. chế vỏ
+
+==================================================
+C. CHỜ XEM BỘ XÍCH RỒI MỚI MUA
+==================================================
+[ ] 2 giá ôm N20 + vít M2 ..................... nếu bộ xích không kèm
+[ ] Vít M3 + ốc chống tuột .................... trục bánh dẫn hướng
+[ ] Dây nối dài servo 15-30 cm ................ nếu dây servo đầu không tới sàn
+
+==================================================
+D. KHÔNG DÙNG NỮA
+==================================================
+- 3 thanh đồng Ø1,6 mm
+- Bộ IR thu + IR phát
+- Bi đa hướng
+- 2 bánh răng kim loại 64T (giữ lại dự phòng)
+- Công tắc gạt cũ (trừ khi đúng loại 2 cực 6 chân, chịu >= 5 A)
+
+==================================================
+E. CÒN CHƯA RÕ (đồ về chụp gửi em)
+==================================================
+[ ] 2 đèn Edison ghi 3V hay 5V
+[ ] 2 đèn LED anh mua thêm là loại gì
+[ ] Công tắc gạt anh đang có là 1 cực hay 2 cực
+[ ] ESP32 cả 2 mặt, rõ chữ in ở 2 hàng chân
+[ ] Mạch sạc 2 mặt, rõ chữ B+, B-, OUT
+[ ] Bộ xích + chỗ bánh tam giác trên vỏ, có thước đặt cạnh
+[ ] Link mạch tăng áp định mua (em xem trước khi đặt)
